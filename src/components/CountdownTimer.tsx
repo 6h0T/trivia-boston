@@ -8,13 +8,15 @@ interface CountdownTimerProps {
   duration: number;
 }
 
-const RADIUS = 40;
+const RADIUS = 44;
+const STROKE = 5;
+const SIZE = 110;
+const CENTER = SIZE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export default function CountdownTimer({
   timeLeft,
   progress,
-  duration,
 }: CountdownTimerProps) {
   const isUrgent = timeLeft <= 3 && timeLeft > 0;
   const offset = CIRCUMFERENCE * (1 - progress);
@@ -24,30 +26,45 @@ export default function CountdownTimer({
     <div
       className={cn(
         'relative flex items-center justify-center',
-        isUrgent && 'animate-pulse'
+        isUrgent ? 'timer-ring urgent' : 'timer-ring'
       )}
     >
       <svg
-        width="96"
-        height="96"
-        viewBox="0 0 96 96"
+        width={SIZE}
+        height={SIZE}
+        viewBox={`0 0 ${SIZE} ${SIZE}`}
         className="rotate-[-90deg]"
       >
+        {/* Background track */}
         <circle
-          cx="48"
-          cy="48"
+          cx={CENTER}
+          cy={CENTER}
           r={RADIUS}
           fill="none"
           stroke="currentColor"
-          strokeWidth="4"
-          className="text-surface-variant opacity-30"
+          strokeWidth={STROKE}
+          className="text-surface-variant opacity-20"
         />
+        {/* Outer glow ring (subtle) */}
         <circle
-          cx="48"
-          cy="48"
+          cx={CENTER}
+          cy={CENTER}
+          r={RADIUS + 4}
+          fill="none"
+          strokeWidth="1"
+          stroke="currentColor"
+          className={cn(
+            'transition-colors duration-300',
+            isUrgent ? 'text-tertiary opacity-20' : 'text-primary opacity-10'
+          )}
+        />
+        {/* Active progress ring */}
+        <circle
+          cx={CENTER}
+          cy={CENTER}
           r={RADIUS}
           fill="none"
-          strokeWidth="4"
+          strokeWidth={STROKE}
           strokeLinecap="round"
           strokeDasharray={CIRCUMFERENCE}
           strokeDashoffset={offset}
@@ -61,14 +78,20 @@ export default function CountdownTimer({
           }}
         />
       </svg>
-      <span
-        className={cn(
-          'absolute font-headline text-2xl font-bold tabular-nums',
-          isUrgent ? 'text-tertiary' : 'text-on-surface'
-        )}
-      >
-        {displayTime}
-      </span>
+      {/* Center content */}
+      <div className="absolute flex flex-col items-center">
+        <span
+          className={cn(
+            'font-headline text-3xl font-bold tabular-nums leading-none',
+            isUrgent ? 'text-tertiary' : 'text-on-surface'
+          )}
+        >
+          {displayTime}
+        </span>
+        <span className="mt-0.5 text-[10px] uppercase tracking-widest text-outline">
+          seg
+        </span>
+      </div>
     </div>
   );
 }
