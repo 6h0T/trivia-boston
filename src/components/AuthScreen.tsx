@@ -49,16 +49,16 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.4 }}
-      className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-center px-6 py-10"
+      className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-center px-5 py-6 sm:px-6 sm:py-10"
     >
       <motion.div
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
         transition={{ delay: 0.2, duration: 0.8, ease: 'easeOut' }}
-        className="divider-glow mb-10 w-32"
+        className="divider-glow mb-6 w-32 sm:mb-10"
       />
 
-      <div className="glass-card-elevated w-full max-w-sm rounded-2xl p-8">
+      <div className="glass-card-elevated w-full max-w-sm rounded-2xl p-6 sm:p-8">
         {/* Logo */}
         <motion.div
           initial={{ scale: 0, rotate: -20 }}
@@ -66,7 +66,7 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
           transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 15 }}
           className="mx-auto mb-6"
         >
-          <div className="relative mx-auto flex h-20 w-20 items-center justify-center">
+          <div className="relative mx-auto flex h-16 w-16 items-center justify-center sm:h-20 sm:w-20">
             <div className="absolute inset-0 rounded-2xl border border-primary/20" />
             <div className="absolute inset-2 rounded-xl bg-primary/5" />
             <Shield className="relative h-9 w-9 text-primary" strokeWidth={1.5} />
@@ -80,12 +80,12 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className="mb-6 text-center"
+          className="mb-5 text-center sm:mb-6"
         >
           <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-primary/60">
             Acceso
           </p>
-          <h1 className="font-headline text-2xl font-bold tracking-tight text-on-surface">
+          <h1 className="font-headline text-xl font-bold tracking-tight text-on-surface sm:text-2xl">
             Trivia Boston
           </h1>
           <div className="divider-glow mx-auto mt-3 w-14" />
@@ -96,7 +96,7 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="relative mb-6 grid grid-cols-2 rounded-xl border border-outline-variant/30 bg-surface-variant/20 p-1"
+          className="relative mb-5 grid grid-cols-2 rounded-xl border border-outline-variant/30 bg-surface-variant/20 p-1 sm:mb-6"
         >
           {(['login', 'register'] as Tab[]).map((t) => (
             <button
@@ -106,7 +106,7 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
                 setTab(t);
                 setError(null);
               }}
-              className="relative z-10 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold uppercase tracking-wider transition-colors touch-manipulation"
+              className="relative z-10 flex min-h-[40px] items-center justify-center gap-1.5 rounded-lg py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors touch-manipulation"
             >
               {t === 'login' ? (
                 <LogIn className="h-3.5 w-3.5" />
@@ -148,7 +148,7 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     disabled={pending}
-                    className="w-full rounded-xl border border-outline-variant/30 bg-surface-variant/20 px-4 py-3.5 pl-10 text-sm text-on-surface placeholder:text-outline/60 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                    className="w-full rounded-xl border border-outline-variant/30 bg-surface-variant/20 px-4 py-3.5 pl-10 text-base text-on-surface placeholder:text-outline/60 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                     autoComplete="name"
                   />
                 </label>
@@ -164,7 +164,7 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={pending}
-              className="w-full rounded-xl border border-outline-variant/30 bg-surface-variant/20 px-4 py-3.5 pl-10 text-sm text-on-surface placeholder:text-outline/60 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+              className="w-full rounded-xl border border-outline-variant/30 bg-surface-variant/20 px-4 py-3.5 pl-10 text-base text-on-surface placeholder:text-outline/60 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
               autoComplete="email"
             />
           </label>
@@ -177,7 +177,7 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={pending}
-              className="w-full rounded-xl border border-outline-variant/30 bg-surface-variant/20 px-4 py-3.5 pl-10 text-sm text-on-surface placeholder:text-outline/60 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+              className="w-full rounded-xl border border-outline-variant/30 bg-surface-variant/20 px-4 py-3.5 pl-10 text-base text-on-surface placeholder:text-outline/60 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
               autoComplete={isRegister ? 'new-password' : 'current-password'}
             />
           </label>
@@ -237,7 +237,7 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
-        className="mt-8 text-[11px] tracking-wider text-outline/50"
+        className="mt-6 text-[11px] tracking-wider text-outline/50 sm:mt-8"
       >
         BOSTON ASSET MANAGER SA
       </motion.p>

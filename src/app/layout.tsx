@@ -1,10 +1,46 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
+const SITE_TITLE = 'Trivia Boston';
+const SITE_DESCRIPTION =
+  'Trivia semanal de fútbol, economía e historia - Boston Asset Manager SA';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  minimumScale: 1,
+  userScalable: true,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+    { media: '(prefers-color-scheme: dark)', color: '#f8fafc' },
+  ],
+  colorScheme: 'light',
+};
+
 export const metadata: Metadata = {
-  title: 'Trivia Boston',
-  description:
-    'Trivia semanal de fútbol, economía e historia - Boston Asset Manager SA',
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_TITLE,
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: SITE_TITLE,
+    statusBarStyle: 'default',
+  },
+  formatDetection: {
+    telephone: false,
+    email: false,
+    address: false,
+  },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/logo-boston.png',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 };
 
 export default function RootLayout({

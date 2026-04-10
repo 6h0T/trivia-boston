@@ -10,6 +10,9 @@ export default function StadiumBackground() {
         className="stadium-video"
         src={IMAGE_SRC}
         alt=""
+        decoding="async"
+        loading="eager"
+        fetchPriority="high"
       />
     </div>
   );

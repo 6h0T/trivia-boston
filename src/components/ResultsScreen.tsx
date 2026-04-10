@@ -73,22 +73,22 @@ export default function ResultsScreen({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
-      className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-center px-6 py-10"
+      className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-center px-5 pb-nav pt-6 sm:px-6 sm:pt-10"
     >
-      <div className="glass-card-elevated w-full max-w-sm rounded-2xl p-8">
+      <div className="glass-card-elevated w-full max-w-sm rounded-2xl p-6 sm:p-8">
         {/* Score */}
         <div className="mb-4 text-center">
           <motion.div
             initial={{ scale: 0, rotate: -10 }}
             animate={{ scale: [0, 1.4, 1], rotate: [10, -5, 0] }}
             transition={{ delay: 0.2, duration: 0.6, ease: 'easeOut' }}
-            className={`relative mb-3 inline-block font-headline text-7xl font-bold tabular-nums ${
+            className={`relative mb-2 inline-block font-headline text-6xl font-bold tabular-nums leading-none sm:mb-3 sm:text-7xl ${
               isPerfect ? 'text-secondary' : 'text-primary'
             }`}
           >
             {isPerfect && <div className="confetti-burst" />}
             {score}
-            <span className="text-3xl text-outline/50">/3</span>
+            <span className="text-2xl text-outline/50 sm:text-3xl">/3</span>
           </motion.div>
 
           {/* Stars */}
@@ -153,7 +153,7 @@ export default function ResultsScreen({
         </p>
 
         {/* Question results */}
-        <div className="mb-6 space-y-2.5">
+        <div className="mb-5 space-y-2 sm:mb-6 sm:space-y-2.5">
           {results.map((result, i) => {
             const question = week.questions[i];
             return (
@@ -162,7 +162,7 @@ export default function ResultsScreen({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 + i * 0.12 }}
-                className={`flex items-start gap-3 rounded-xl p-3 ${
+                className={`flex items-start gap-2.5 rounded-xl p-2.5 sm:gap-3 sm:p-3 ${
                   result.isCorrect
                     ? 'bg-secondary/5 border border-secondary/10'
                     : 'bg-surface-variant/20 border border-outline-variant/10'
@@ -211,7 +211,7 @@ export default function ResultsScreen({
           transition={{ delay: 1 }}
           whileTap={{ scale: 0.98 }}
           onClick={onShowLeaderboard}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-outline-variant/30 bg-surface-variant/20 px-6 py-3 text-sm font-semibold text-outline transition-all hover:border-primary/40 hover:text-primary touch-manipulation"
+          className="mt-3 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-outline-variant/30 bg-surface-variant/20 px-6 py-3 text-sm font-semibold text-outline transition-all hover:border-primary/40 hover:text-primary touch-manipulation"
         >
           <Trophy className="h-4 w-4" />
           Ver ranking
@@ -223,7 +223,7 @@ export default function ResultsScreen({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.05 }}
-        className="mt-8 text-[11px] tracking-wider text-outline/50"
+        className="mt-6 text-[11px] tracking-wider text-outline/50 sm:mt-8"
       >
         BOSTON ASSET MANAGER SA
       </motion.p>

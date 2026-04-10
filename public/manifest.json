@@ -1,0 +1,21 @@
+{
+  "name": "Trivia Boston",
+  "short_name": "Trivia Boston",
+  "description": "Trivia semanal de fútbol, economía e historia - Boston Asset Manager SA",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#f8fafc",
+  "lang": "es",
+  "categories": ["games", "entertainment", "finance"],
+  "icons": [
+    {
+      "src": "/logo-boston.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

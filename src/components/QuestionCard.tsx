@@ -123,23 +123,26 @@ export default function QuestionCard({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -60 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="relative z-10 flex min-h-[100dvh] flex-col items-center px-6 pb-8 pt-safe"
-      style={{ paddingTop: 'max(3rem, env(safe-area-inset-top, 3rem))' }}
+      className="relative z-10 flex min-h-[100dvh] flex-col items-center px-5"
+      style={{
+        paddingTop: 'max(1.25rem, env(safe-area-inset-top, 1.25rem))',
+        paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom, 1.25rem))',
+      }}
     >
-      <div className="w-full max-w-sm">
+      <div className="flex w-full max-w-sm flex-1 flex-col">
         {/* Header: progress + category */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="mb-8 flex items-center justify-between"
+          className="mb-4 flex items-center justify-between sm:mb-6"
         >
           <ProgressDots
             currentIndex={questionIndex}
             results={results}
             total={3}
           />
-          <span className="category-badge rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary/80">
+          <span className="category-badge rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary/80 sm:text-[11px]">
             {question.category}
           </span>
         </motion.div>
@@ -149,7 +152,7 @@ export default function QuestionCard({
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1, type: 'spring', stiffness: 300 }}
-          className="mb-8 flex justify-center"
+          className="mb-4 flex justify-center sm:mb-6"
         >
           <CountdownTimer
             timeLeft={timeLeft}
@@ -158,18 +161,19 @@ export default function QuestionCard({
           />
         </motion.div>
 
-        {/* Question text */}
+        {/* Question text — clamp() keeps text legible without overflow on SE */}
         <motion.h2
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12 }}
-          className="mb-8 text-center font-headline text-xl font-semibold leading-snug text-on-surface"
+          className="mb-3 text-center font-headline font-semibold leading-snug text-on-surface sm:mb-5"
+          style={{ fontSize: 'clamp(1.05rem, 4.2vw, 1.25rem)' }}
         >
           {question.text}
         </motion.h2>
 
         {/* Divider */}
-        <div className="divider-glow mx-auto mb-6 w-12" />
+        <div className="divider-glow mx-auto mb-4 w-12 sm:mb-5" />
 
         {/* Verdict banner — appears above answers during reveal */}
         <AnimatePresence mode="wait">
@@ -187,7 +191,7 @@ export default function QuestionCard({
               }}
               role="status"
               aria-live="polite"
-              className={`mb-5 flex items-center gap-3 rounded-2xl px-4 py-4 ${verdict.wrapperClass}`}
+              className={`mb-3 flex items-center gap-3 rounded-2xl px-3.5 py-3 sm:mb-4 sm:px-4 sm:py-4 ${verdict.wrapperClass}`}
             >
               <motion.div
                 initial={{ scale: 0.5, rotate: -12, opacity: 0 }}
@@ -198,18 +202,18 @@ export default function QuestionCard({
                   stiffness: 420,
                   damping: 18,
                 }}
-                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border ${verdict.iconWrapperClass}`}
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border sm:h-12 sm:w-12 ${verdict.iconWrapperClass}`}
               >
-                <verdict.Icon className="h-7 w-7" strokeWidth={2.5} />
+                <verdict.Icon className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2.5} />
               </motion.div>
               <div className="min-w-0 flex-1">
                 <p
-                  className={`font-headline text-xl font-bold leading-tight ${verdict.headlineClass}`}
+                  className={`font-headline text-lg font-bold leading-tight sm:text-xl ${verdict.headlineClass}`}
                 >
                   {verdict.headline}
                 </p>
                 <p
-                  className={`mt-0.5 truncate text-sm font-medium ${verdict.supportingClass}`}
+                  className={`mt-0.5 truncate text-[13px] font-medium sm:text-sm ${verdict.supportingClass}`}
                 >
                   {verdict.supporting}
                 </p>
@@ -219,7 +223,7 @@ export default function QuestionCard({
         </AnimatePresence>
 
         {/* Answer options */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5 sm:gap-3">
           {question.options.map((option, i) => (
             <AnswerOption
               key={i}

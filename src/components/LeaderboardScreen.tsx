@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Trophy, Medal, Award, Clock, Star } from 'lucide-react';
 import { getLeaderboard } from '@/app/actions/leaderboard';
 import type { LeaderboardEntry } from '@/types/game';
@@ -27,6 +27,8 @@ export default function LeaderboardScreen({
 }: LeaderboardScreenProps) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const prefersReducedMotion = useReducedMotion();
+  const fadeDuration = prefersReducedMotion ? 0 : 0.4;
 
   useEffect(() => {
     let mounted = true;
@@ -49,9 +51,14 @@ export default function LeaderboardScreen({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.4 }}
-      className="relative z-10 flex min-h-[100dvh] flex-col items-center px-5 pb-32"
-      style={{ paddingTop: 'max(3rem, env(safe-area-inset-top, 3rem))' }}
+      transition={{ duration: fadeDuration }}
+      className="relative z-10 flex min-h-[100dvh] flex-col items-center px-5"
+      style={{
+        paddingTop: 'max(3rem, calc(env(safe-area-inset-top, 0px) + 3rem))',
+        // Clear fixed BottomNav + iOS home indicator.
+        paddingBottom:
+          'calc(env(safe-area-inset-bottom, 0px) + 8rem)',
+      }}
     >
       <div className="w-full max-w-sm">
         {/* Header */}
@@ -148,20 +155,30 @@ export default function LeaderboardScreen({
             >
               Resto de la tabla
             </motion.p>
-            <div className="space-y-2">
+            <div
+              className="space-y-2"
+              style={{ contain: 'content' }}
+            >
               {rest.map((entry, i) => {
                 const isCurrent = entry.userId === currentUserId;
+                const rowInitial = prefersReducedMotion
+                  ? { opacity: 0, x: 0 }
+                  : { opacity: 0, x: -10 };
+                const rowTransition = prefersReducedMotion
+                  ? { duration: 0.15 }
+                  : { delay: 0.4 + Math.min(i, 10) * 0.04 };
                 return (
                   <motion.div
                     key={entry.sessionId}
-                    initial={{ opacity: 0, x: -10 }}
+                    initial={rowInitial}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 + i * 0.04 }}
+                    transition={rowTransition}
                     className={`flex items-center gap-3 rounded-xl border p-3 ${
                       isCurrent
                         ? 'border-primary/40 bg-primary/10 shadow-[0_4px_15px_rgba(37,99,235,0.15)]'
                         : 'glass-card'
                     }`}
+                    style={{ contain: 'layout paint' }}
                   >
                     <span
                       className={`w-6 text-center font-headline text-sm font-bold tabular-nums ${

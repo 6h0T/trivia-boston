@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Home, Sparkles, Trophy, User } from 'lucide-react';
 
 export type NavTab = 'home' | 'bostonplus' | 'ranking' | 'profile';
@@ -22,34 +22,71 @@ const TABS: Array<{
 ];
 
 export default function BottomNav({ active, onNavigate }: BottomNavProps) {
+  const prefersReducedMotion = useReducedMotion();
+
+  const navInitial = prefersReducedMotion
+    ? { y: 0, opacity: 0 }
+    : { y: 80, opacity: 0 };
+  const navExit = prefersReducedMotion
+    ? { y: 0, opacity: 0 }
+    : { y: 80, opacity: 0 };
+
   return (
     <motion.nav
-      initial={{ y: 80, opacity: 0 }}
+      aria-label="Navegación principal"
+      initial={navInitial}
       animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 80, opacity: 0 }}
-      transition={{ type: 'spring', stiffness: 260, damping: 28 }}
-      className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      exit={navExit}
+      transition={{
+        type: 'spring',
+        stiffness: 260,
+        damping: 28,
+        duration: prefersReducedMotion ? 0.15 : undefined,
+      }}
+      className="fixed left-1/2 z-50 -translate-x-1/2"
+      style={{
+        // Lift above iOS home indicator. Base offset + safe-area inset.
+        bottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.5rem))',
+        // Hint the compositor for smooth transforms on scroll.
+        willChange: 'transform',
+      }}
     >
-      <div className="glass-panel flex items-center gap-1 rounded-full border px-2 py-2 shadow-[0_10px_40px_rgba(30,64,175,0.18)] backdrop-blur-2xl">
+      <div
+        role="tablist"
+        className="glass-panel flex items-center gap-1 rounded-full border px-2 py-2 shadow-[0_10px_40px_rgba(30,64,175,0.18)] backdrop-blur-2xl"
+      >
         {TABS.map((tab) => {
           const isActive = active === tab.id;
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
-              onClick={() => onNavigate(tab.id)}
-              className="relative flex min-w-[62px] touch-manipulation flex-col items-center justify-center rounded-full px-3 py-2 transition-colors"
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-current={isActive ? 'page' : undefined}
               aria-label={tab.label}
+              onClick={() => onNavigate(tab.id)}
+              className="relative flex min-h-[48px] min-w-[62px] flex-col items-center justify-center rounded-full px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white/80"
+              style={{
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
+              }}
             >
               {isActive && (
                 <motion.span
                   layoutId="bottom-nav-pill"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0 }
+                      : { type: 'spring', stiffness: 400, damping: 30 }
+                  }
                   className="absolute inset-0 rounded-full bg-primary shadow-[0_4px_16px_rgba(37,99,235,0.4)]"
                 />
               )}
               <Icon
+                aria-hidden="true"
+                focusable="false"
                 className={`relative z-10 h-[18px] w-[18px] ${
                   isActive ? 'text-on-primary' : 'text-on-surface/70'
                 }`}

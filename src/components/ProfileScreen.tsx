@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Lock, LogOut, Sparkles } from 'lucide-react';
 import {
   MEDAL_CATALOG,
@@ -27,6 +27,8 @@ export default function ProfileScreen({
   onLogout,
   unlockedIds = [],
 }: ProfileScreenProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const fadeDuration = prefersReducedMotion ? 0 : 0.4;
   const unlockedSet = new Set(unlockedIds);
   const unlockedCount = MEDAL_CATALOG.filter((m) => unlockedSet.has(m.id))
     .length;
@@ -48,9 +50,12 @@ export default function ProfileScreen({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.4 }}
-      className="relative z-10 flex min-h-[100dvh] flex-col items-center px-5 pb-32"
-      style={{ paddingTop: 'max(3rem, env(safe-area-inset-top, 3rem))' }}
+      transition={{ duration: fadeDuration }}
+      className="relative z-10 flex min-h-[100dvh] flex-col items-center px-5"
+      style={{
+        paddingTop: 'max(3rem, calc(env(safe-area-inset-top, 0px) + 3rem))',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8rem)',
+      }}
     >
       <div className="w-full max-w-sm">
         {/* Header */}
@@ -106,11 +111,22 @@ export default function ProfileScreen({
                 <span className="text-outline">/{totalCount}</span>
               </span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-surface-variant/20">
+            <div
+              className="h-2 overflow-hidden rounded-full bg-surface-variant/20"
+              role="progressbar"
+              aria-valuenow={unlockedCount}
+              aria-valuemin={0}
+              aria-valuemax={totalCount}
+              aria-label={`Medallas desbloqueadas: ${unlockedCount} de ${totalCount}`}
+            >
               <motion.div
-                initial={{ width: 0 }}
+                initial={{ width: prefersReducedMotion ? `${progressPct}%` : 0 }}
                 animate={{ width: `${progressPct}%` }}
-                transition={{ delay: 0.3, duration: 0.8, ease: 'easeOut' }}
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0 }
+                    : { delay: 0.3, duration: 0.8, ease: 'easeOut' }
+                }
                 className="h-full rounded-full"
                 style={{
                   background:
@@ -136,20 +152,32 @@ export default function ProfileScreen({
           {(Object.keys(grouped) as MedalCategory[]).map((category, cIdx) => (
             <motion.section
               key={category}
-              initial={{ opacity: 0, y: 10 }}
+              initial={
+                prefersReducedMotion
+                  ? { opacity: 0, y: 0 }
+                  : { opacity: 0, y: 10 }
+              }
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 + cIdx * 0.05 }}
+              transition={{ delay: prefersReducedMotion ? 0 : 0.3 + cIdx * 0.05 }}
             >
               <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-on-surface/60">
                 {CATEGORY_LABELS[category]}
               </h3>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div
+                className="grid grid-cols-2 gap-2.5"
+                style={{ contain: 'content' }}
+              >
                 {grouped[category].map((medal, mIdx) => (
                   <MedalCard
                     key={medal.id}
                     medal={medal}
                     unlocked={unlockedSet.has(medal.id)}
-                    delay={0.35 + cIdx * 0.05 + mIdx * 0.03}
+                    delay={
+                      prefersReducedMotion
+                        ? 0
+                        : 0.35 + cIdx * 0.05 + mIdx * 0.03
+                    }
+                    reduceMotion={!!prefersReducedMotion}
                   />
                 ))}
               </div>
@@ -159,13 +187,16 @@ export default function ProfileScreen({
 
         {/* Logout */}
         <motion.button
+          type="button"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
+          transition={{ delay: prefersReducedMotion ? 0 : 0.7 }}
           onClick={onLogout}
-          className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl border border-tertiary/40 bg-white/60 px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-tertiary transition-all hover:bg-tertiary/10 hover:border-tertiary/60 touch-manipulation"
+          aria-label="Cerrar sesión"
+          className="mt-8 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-tertiary/40 bg-white/60 px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-tertiary transition-all hover:bg-tertiary/10 hover:border-tertiary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tertiary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white/80 touch-manipulation"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-4 w-4" aria-hidden="true" focusable="false" />
           Cerrar sesion
         </motion.button>
       </div>
@@ -177,20 +208,28 @@ function MedalCard({
   medal,
   unlocked,
   delay,
+  reduceMotion,
 }: {
   medal: Medal;
   unlocked: boolean;
   delay: number;
+  reduceMotion: boolean;
 }) {
   const tierColors = TIER_COLORS[medal.tier];
   const Icon = medal.icon;
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={
+        reduceMotion ? { opacity: 0, scale: 1 } : { opacity: 0, scale: 0.9 }
+      }
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay, type: 'spring', stiffness: 300 }}
-      whileTap={{ scale: 0.97 }}
+      transition={
+        reduceMotion
+          ? { delay: 0, duration: 0.15 }
+          : { delay, type: 'spring', stiffness: 300 }
+      }
+      whileTap={reduceMotion ? undefined : { scale: 0.97 }}
       className={`group glass-card relative flex flex-col items-center rounded-xl p-3 text-center transition-all ${
         unlocked
           ? `${tierColors.border} hover:scale-[1.02]`

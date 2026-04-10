@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import {
   Sparkles,
   Check,
@@ -82,14 +82,20 @@ const BENEFITS: { icon: LucideIcon; label: string }[] = [
 ];
 
 export default function BostonPlusScreen() {
+  const prefersReducedMotion = useReducedMotion();
+  const fadeDuration = prefersReducedMotion ? 0 : 0.4;
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.4 }}
-      className="relative z-10 flex min-h-[100dvh] flex-col items-center px-5 pb-32"
-      style={{ paddingTop: 'max(3rem, env(safe-area-inset-top, 3rem))' }}
+      transition={{ duration: fadeDuration }}
+      className="relative z-10 flex min-h-[100dvh] flex-col items-center px-5"
+      style={{
+        paddingTop: 'max(3rem, calc(env(safe-area-inset-top, 0px) + 3rem))',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8rem)',
+      }}
     >
       <div className="w-full max-w-sm">
         {/* Header */}
@@ -151,7 +157,12 @@ export default function BostonPlusScreen() {
         {/* Plan cards */}
         <div className="space-y-4">
           {PLANS.map((plan, i) => (
-            <PlanCard key={plan.id} plan={plan} delay={0.35 + i * 0.1} />
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              delay={prefersReducedMotion ? 0 : 0.35 + i * 0.1}
+              reduceMotion={!!prefersReducedMotion}
+            />
           ))}
         </div>
 
@@ -174,15 +185,27 @@ export default function BostonPlusScreen() {
   );
 }
 
-function PlanCard({ plan, delay }: { plan: Plan; delay: number }) {
+function PlanCard({
+  plan,
+  delay,
+  reduceMotion,
+}: {
+  plan: Plan;
+  delay: number;
+  reduceMotion: boolean;
+}) {
   const Icon = plan.icon;
   const isHighlight = plan.highlight;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={reduceMotion ? { opacity: 0, y: 0 } : { opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, type: 'spring', stiffness: 200, damping: 22 }}
+      transition={
+        reduceMotion
+          ? { delay: 0, duration: 0.15 }
+          : { delay, type: 'spring', stiffness: 200, damping: 22 }
+      }
       className={`relative rounded-2xl p-5 ${
         isHighlight
           ? 'glass-card-elevated border-primary/40 shadow-[0_10px_35px_rgba(37,99,235,0.18)]'
@@ -272,12 +295,30 @@ function PlanCard({ plan, delay }: { plan: Plan; delay: number }) {
 
       {/* CTA */}
       {isHighlight ? (
-        <button className="boston-cta btn-shine flex w-full items-center justify-center gap-2 px-4 py-3 text-xs touch-manipulation">
-          <MessageCircle className="h-3.5 w-3.5" />
+        <button
+          type="button"
+          aria-label={`Consultar plan ${plan.name}`}
+          className="boston-cta btn-shine flex min-h-[48px] w-full items-center justify-center gap-2 px-4 py-3 text-xs touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white/80"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
+        >
+          <MessageCircle
+            className="h-3.5 w-3.5"
+            aria-hidden="true"
+            focusable="false"
+          />
           Consultar plan
         </button>
       ) : (
-        <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/30 bg-white/60 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-primary transition-all hover:bg-primary/5 hover:border-primary/50 touch-manipulation">
+        <button
+          type="button"
+          aria-label={
+            plan.priceMonthly === 'Gratis'
+              ? `Comenzar gratis con el plan ${plan.name}`
+              : `Consultar plan ${plan.name}`
+          }
+          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-primary/30 bg-white/60 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-primary transition-all hover:bg-primary/5 hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white/80 touch-manipulation"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
+        >
           {plan.priceMonthly === 'Gratis' ? 'Comenzar gratis' : 'Consultar plan'}
         </button>
       )}
