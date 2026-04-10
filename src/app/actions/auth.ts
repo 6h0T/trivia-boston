@@ -124,12 +124,7 @@ export async function registerUser(
       hint: error?.hint,
     });
     await logAttempt('register', trimmedEmail, ipHash, fingerprintHash, false);
-    const detail =
-      error?.message ?? (inserted ? 'select vacio' : 'sin datos');
-    return {
-      ok: false,
-      error: `No se pudo crear la cuenta [${error?.code ?? 'nil'}]: ${detail}`,
-    };
+    return { ok: false, error: 'No se pudo crear la cuenta' };
   }
 
   // Registrar el fingerprint del dispositivo
