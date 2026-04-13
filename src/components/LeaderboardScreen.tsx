@@ -1,9 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
-import { Trophy, Medal, Award, Clock, Star } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { Trophy, Medal, Award, Clock, Star, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 import { getLeaderboard } from '@/app/actions/leaderboard';
+import { getAvatarForUser } from '@/lib/avatar';
+import UserProfileModal from '@/components/UserProfileModal';
 import type { LeaderboardEntry } from '@/types/game';
 
 interface LeaderboardScreenProps {
@@ -27,6 +30,7 @@ export default function LeaderboardScreen({
 }: LeaderboardScreenProps) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const fadeDuration = prefersReducedMotion ? 0 : 0.4;
 
@@ -55,7 +59,6 @@ export default function LeaderboardScreen({
       className="relative z-10 flex min-h-[100dvh] flex-col items-center px-5"
       style={{
         paddingTop: 'max(3rem, calc(env(safe-area-inset-top, 0px) + 3rem))',
-        // Clear fixed BottomNav + iOS home indicator.
         paddingBottom:
           'calc(env(safe-area-inset-bottom, 0px) + 8rem)',
       }}
@@ -119,6 +122,10 @@ export default function LeaderboardScreen({
                   heightClass="h-28"
                   icon={<Medal className="h-5 w-5 text-slate-400" />}
                   isCurrent={top3[1].userId === currentUserId}
+                  avatarSize={40}
+                  borderColor="border-t-slate-400"
+                  prefersReducedMotion={!!prefersReducedMotion}
+                  onSelect={setSelectedUserId}
                 />
               )}
               {top3[0] && (
@@ -129,6 +136,10 @@ export default function LeaderboardScreen({
                   icon={<Trophy className="h-6 w-6 text-primary" />}
                   isCurrent={top3[0].userId === currentUserId}
                   highlight
+                  avatarSize={48}
+                  borderColor="border-t-[#d4a853]"
+                  prefersReducedMotion={!!prefersReducedMotion}
+                  onSelect={setSelectedUserId}
                 />
               )}
               {top3.length > 2 && (
@@ -138,6 +149,10 @@ export default function LeaderboardScreen({
                   heightClass="h-20"
                   icon={<Award className="h-5 w-5 text-sky-700" />}
                   isCurrent={top3[2].userId === currentUserId}
+                  avatarSize={40}
+                  borderColor="border-t-[#b87333]"
+                  prefersReducedMotion={!!prefersReducedMotion}
+                  onSelect={setSelectedUserId}
                 />
               )}
             </div>
@@ -173,13 +188,24 @@ export default function LeaderboardScreen({
                     initial={rowInitial}
                     animate={{ opacity: 1, x: 0 }}
                     transition={rowTransition}
-                    className={`flex items-center gap-3 rounded-xl border p-3 ${
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all duration-300 hover:shadow-lg ${
                       isCurrent
-                        ? 'border-primary/40 bg-[#f8fafc] shadow-[0_4px_15px_rgba(37,99,235,0.15)]'
-                        : 'glass-card'
+                        ? 'border-l-4 border-l-primary border-primary/40 bg-[#f8fafc] shadow-[0_4px_15px_rgba(37,99,235,0.15)]'
+                        : 'glass-card hover:-translate-y-0.5'
                     }`}
                     style={{ contain: 'layout paint' }}
+                    onClick={() => setSelectedUserId(entry.userId)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Ver perfil de ${entry.name}`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedUserId(entry.userId);
+                      }
+                    }}
                   >
+                    {/* Rank */}
                     <span
                       className={`w-6 text-center font-headline text-sm font-bold tabular-nums ${
                         isCurrent ? 'text-primary' : 'text-outline'
@@ -187,21 +213,41 @@ export default function LeaderboardScreen({
                     >
                       {i + 4}
                     </span>
-                    <span
-                      className={`flex-1 truncate text-sm font-semibold ${
-                        isCurrent ? 'text-primary' : 'text-on-surface'
-                      }`}
-                    >
-                      {entry.name}
-                    </span>
+
+                    {/* Avatar */}
+                    <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full border border-primary/20">
+                      <Image
+                        src={getAvatarForUser(entry.userId)}
+                        alt={entry.name}
+                        width={32}
+                        height={32}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+
+                    {/* Name + time */}
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span
+                        className={`truncate text-sm font-semibold ${
+                          isCurrent ? 'text-primary' : 'text-on-surface'
+                        }`}
+                      >
+                        {entry.name}
+                      </span>
+                      <span className="flex items-center gap-1 text-[10px] text-[#64748b]">
+                        <Clock className="h-2.5 w-2.5" />
+                        {formatTime(entry.totalTimeMs)}
+                      </span>
+                    </div>
+
+                    {/* Score */}
                     <span className="flex items-center gap-1 text-xs text-outline">
                       <Star className="h-3 w-3 fill-secondary text-secondary" />
                       {entry.score}/3
                     </span>
-                    <span className="flex items-center gap-1 font-mono text-xs tabular-nums text-outline">
-                      <Clock className="h-3 w-3" />
-                      {formatTime(entry.totalTimeMs)}
-                    </span>
+
+                    {/* Chevron */}
+                    <ChevronRight className="h-4 w-4 flex-shrink-0 text-[#64748b]" />
                   </motion.div>
                 );
               })}
@@ -209,6 +255,18 @@ export default function LeaderboardScreen({
           </>
         )}
       </div>
+
+      {/* Profile modal */}
+      <AnimatePresence>
+        {selectedUserId && (
+          <UserProfileModal
+            key={selectedUserId}
+            userId={selectedUserId}
+            weekNumber={weekNumber}
+            onClose={() => setSelectedUserId(null)}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
@@ -220,6 +278,10 @@ function PodiumBlock({
   icon,
   isCurrent,
   highlight = false,
+  avatarSize,
+  borderColor,
+  prefersReducedMotion,
+  onSelect,
 }: {
   entry: LeaderboardEntry;
   place: number;
@@ -227,18 +289,70 @@ function PodiumBlock({
   icon: React.ReactNode;
   isCurrent: boolean;
   highlight?: boolean;
+  avatarSize: number;
+  borderColor: string;
+  prefersReducedMotion: boolean;
+  onSelect: (userId: string) => void;
 }) {
   const totalSec = Math.floor(entry.totalTimeMs / 1000);
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
+  const avatarSrc = getAvatarForUser(entry.userId);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.35 + (place - 1) * 0.1, type: 'spring' }}
-      className="flex flex-1 flex-col items-center"
+      transition={
+        prefersReducedMotion
+          ? { duration: 0.1 }
+          : { delay: 0.35 + (place - 1) * 0.1, type: 'spring' }
+      }
+      className="flex flex-1 cursor-pointer flex-col items-center transition-all duration-300 hover:-translate-y-1"
+      onClick={() => onSelect(entry.userId)}
+      role="button"
+      tabIndex={0}
+      aria-label={`Ver perfil de ${entry.name}`}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect(entry.userId);
+        }
+      }}
     >
+      {/* Icon */}
       <div className="mb-2">{icon}</div>
+
+      {/* Avatar with rank badge */}
+      <div className="relative mb-2">
+        <div
+          className="overflow-hidden rounded-full border border-primary/20"
+          style={{ width: avatarSize, height: avatarSize }}
+        >
+          <Image
+            src={avatarSrc}
+            alt={entry.name}
+            width={avatarSize}
+            height={avatarSize}
+            className="h-full w-full object-cover"
+          />
+        </div>
+        <span
+          className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white"
+          style={{
+            background:
+              place === 1
+                ? '#d4a853'
+                : place === 2
+                  ? '#94a3b8'
+                  : '#b87333',
+          }}
+        >
+          {place}
+        </span>
+      </div>
+
+      {/* Name */}
       <p
         className={`mb-1 max-w-[80px] truncate text-center text-[11px] font-bold ${
           isCurrent || highlight ? 'text-primary' : 'text-on-surface'
@@ -246,6 +360,8 @@ function PodiumBlock({
       >
         {entry.name}
       </p>
+
+      {/* Score */}
       <p className="mb-1 flex items-center gap-0.5 text-[10px] text-outline">
         <Star
           className={`h-2.5 w-2.5 ${
@@ -256,13 +372,17 @@ function PodiumBlock({
         />
         {entry.score}/3
       </p>
+
+      {/* Time */}
       <p className="mb-2 font-mono text-[9px] tabular-nums text-outline">
         {m}:{s.toString().padStart(2, '0')}
       </p>
+
+      {/* Podium bar */}
       <div
-        className={`${heightClass} flex w-full items-start justify-center rounded-t-xl border pt-2 ${
+        className={`${heightClass} flex w-full items-start justify-center rounded-t-xl border-t-4 ${borderColor} border pt-2 ${
           highlight
-            ? 'border-primary/50 border-l-4 border-l-primary bg-white shadow-[0_-4px_15px_rgba(37,99,235,0.15)]'
+            ? 'border-primary/50 bg-white shadow-[0_-4px_15px_rgba(37,99,235,0.15)]'
             : isCurrent
               ? 'border-primary/40 bg-[#f8fafc]'
               : 'border-outline-variant bg-white'
