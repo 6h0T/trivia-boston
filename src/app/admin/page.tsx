@@ -1,5 +1,7 @@
-import { Trophy, Users, GamepadIcon, Clock, Medal, Award, Star } from 'lucide-react';
+import { redirect } from 'next/navigation';
+import { Trophy, Users, GamepadIcon, Clock, Medal, Award, Star, LogOut } from 'lucide-react';
 import { getAdminStats } from '@/app/actions/admin';
+import { isAdminAuthenticated, logoutAdmin } from '@/app/actions/admin-auth';
 import { weeks } from '@/data/questions';
 
 export const dynamic = 'force-dynamic';
@@ -27,6 +29,11 @@ const PLACE_STYLES = [
 ];
 
 export default async function AdminPage() {
+  const authenticated = await isAdminAuthenticated();
+  if (!authenticated) {
+    redirect('/admin/login');
+  }
+
   const stats = await getAdminStats();
 
   return (
@@ -34,18 +41,35 @@ export default async function AdminPage() {
       {/* Header */}
       <header className="border-b border-[#e2e8f0] bg-white px-6 py-5">
         <div className="mx-auto max-w-6xl">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1d3969] text-white">
-              <GamepadIcon className="h-5 w-5" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1d3969] text-white">
+                <GamepadIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-[#0f172a] tracking-tight">
+                  Admin Dashboard
+                </h1>
+                <p className="text-xs text-[#64748b]">
+                  Trivia Boston — Ganadores semanales
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-[#0f172a] tracking-tight">
-                Admin Dashboard
-              </h1>
-              <p className="text-xs text-[#64748b]">
-                Trivia Boston — Ganadores semanales
-              </p>
-            </div>
+            <form
+              action={async () => {
+                'use server';
+                await logoutAdmin();
+                redirect('/admin/login');
+              }}
+            >
+              <button
+                type="submit"
+                className="flex items-center gap-2 rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-xs font-medium text-[#64748b] transition-colors hover:bg-[#f8fafc] hover:text-[#0f172a]"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                Cerrar sesion
+              </button>
+            </form>
           </div>
         </div>
       </header>
