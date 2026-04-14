@@ -74,7 +74,7 @@ export default async function DocsIndexPage() {
           <Link href="/" className="hover:text-primary transition-colors">
             ← Volver al juego
           </Link>
-          <span className="tracking-wider">BOSTON ASSET MANAGER SA</span>
+          <span className="font-semibold tracking-wider text-black">BOSTON ASSET MANAGER SA</span>
         </div>
       </div>
     </main>

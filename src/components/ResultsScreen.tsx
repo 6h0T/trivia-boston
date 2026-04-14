@@ -219,14 +219,24 @@ export default function ResultsScreen({
       </div>
 
       {/* Footer */}
-      <motion.p
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.05 }}
-        className="mt-6 text-[11px] tracking-wider text-outline/50 sm:mt-8"
+        className="mt-6 flex flex-col items-center gap-1.5 sm:mt-8"
       >
-        BOSTON ASSET MANAGER SA
-      </motion.p>
+        <p className="text-[11px] font-semibold tracking-wider text-black">
+          BOSTON ASSET MANAGER SA
+        </p>
+        <a
+          href="/docs/terminos-y-condiciones"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[10px] tracking-wide text-primary/70 underline underline-offset-2 hover:text-primary transition-colors"
+        >
+          Terminos y Condiciones
+        </a>
+      </motion.div>
     </motion.div>
   );
 }

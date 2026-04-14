@@ -71,7 +71,7 @@ export default async function DocPage({ params }: PageProps) {
           <Link href="/docs" className="hover:text-primary transition-colors">
             ← Volver al índice
           </Link>
-          <span className="tracking-wider">BOSTON ASSET MANAGER SA</span>
+          <span className="font-semibold tracking-wider text-black">BOSTON ASSET MANAGER SA</span>
         </div>
       </div>
     </main>
