@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
-import { LogIn, UserPlus, Mail, Lock, User } from 'lucide-react';
+import { LogIn, UserPlus, Mail, Lock, User, Phone } from 'lucide-react';
 import { registerUser, loginUser } from '@/app/actions/auth';
 import { getFingerprint } from '@/lib/auth/fingerprint';
 import type { TriviaUser } from '@/types/game';
@@ -17,6 +17,7 @@ type Tab = 'login' | 'register';
 export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
   const [tab, setTab] = useState<Tab>('login');
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +32,7 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
     startTransition(async () => {
       const result =
         tab === 'register'
-          ? await registerUser(name, email, password, fingerprint)
+          ? await registerUser(name, email, password, fingerprint, phone)
           : await loginUser(email, password, fingerprint);
 
       if (result.ok) {
@@ -154,6 +155,18 @@ export default function AuthScreen({ onAuthenticated }: AuthScreenProps) {
                     disabled={pending}
                     className="w-full rounded-xl border border-outline-variant bg-white px-4 py-3.5 pl-10 text-base text-on-surface placeholder:text-outline/60 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                     autoComplete="name"
+                  />
+                </label>
+                <label className="relative block mt-3">
+                  <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-outline/60" />
+                  <input
+                    type="tel"
+                    placeholder="Telefono (ej: 11 2345 6789)"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    disabled={pending}
+                    className="w-full rounded-xl border border-outline-variant bg-white px-4 py-3.5 pl-10 text-base text-on-surface placeholder:text-outline/60 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                    autoComplete="tel"
                   />
                 </label>
               </motion.div>

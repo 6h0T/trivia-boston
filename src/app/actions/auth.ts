@@ -41,10 +41,12 @@ export async function registerUser(
   name: string,
   email: string,
   password: string,
-  fingerprintHash: string
+  fingerprintHash: string,
+  phone?: string
 ): Promise<AuthResult> {
   const trimmedName = name.trim();
   const trimmedEmail = email.trim().toLowerCase();
+  const trimmedPhone = phone?.trim() || null;
 
   if (!trimmedName || !trimmedEmail || !password) {
     return { ok: false, error: 'Completá todos los campos' };
@@ -112,7 +114,7 @@ export async function registerUser(
 
   const { data: inserted, error } = await supabase
     .from('trivia_users')
-    .insert({ name: trimmedName, email: trimmedEmail, password_hash: passwordHash })
+    .insert({ name: trimmedName, email: trimmedEmail, password_hash: passwordHash, phone: trimmedPhone })
     .select('id, name, email')
     .single();
 

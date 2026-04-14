@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation';
-import { Trophy, Users, GamepadIcon, Clock, Medal, Award, Star, LogOut } from 'lucide-react';
+import { Trophy, Users, GamepadIcon, Clock, Medal, Award, Star, LogOut, Phone, Monitor, Mail, Calendar } from 'lucide-react';
 import { getAdminStats } from '@/app/actions/admin';
 import { isAdminAuthenticated, logoutAdmin } from '@/app/actions/admin-auth';
-import { weeks } from '@/data/questions';
+import { weeks as weekData } from '@/data/questions';
+import AdminTabs from './AdminTabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,8 +19,22 @@ function formatTime(ms: number): string {
 }
 
 function getWeekTitle(weekNumber: number): string {
-  const week = weeks.find((w) => w.weekNumber === weekNumber);
+  const week = weekData.find((w) => w.weekNumber === weekNumber);
   return week?.title ?? `Semana ${weekNumber}`;
+}
+
+function parseDevice(ua: string | null): string {
+  if (!ua) return 'Desconocido';
+  if (ua.includes('iPhone')) return 'iPhone';
+  if (ua.includes('iPad')) return 'iPad';
+  if (ua.includes('Android')) {
+    const match = ua.match(/Android[^;]*;\s*([^)]+)/);
+    return match ? match[1].trim() : 'Android';
+  }
+  if (ua.includes('Windows')) return 'Windows PC';
+  if (ua.includes('Mac')) return 'Mac';
+  if (ua.includes('Linux')) return 'Linux';
+  return 'Navegador';
 }
 
 const PLACE_STYLES = [
@@ -51,7 +66,7 @@ export default async function AdminPage() {
                   Admin Dashboard
                 </h1>
                 <p className="text-xs text-[#64748b]">
-                  Trivia Boston — Ganadores semanales
+                  Trivia Boston — Panel de administracion
                 </p>
               </div>
             </div>
@@ -106,106 +121,215 @@ export default async function AdminPage() {
           />
         </div>
 
-        {/* Weekly sections */}
-        {stats.weeks.length === 0 ? (
-          <div className="rounded-2xl border border-[#e2e8f0] bg-white p-12 text-center">
-            <Trophy className="mx-auto mb-3 h-10 w-10 text-[#cbd5e1]" />
-            <p className="text-sm font-semibold text-[#64748b]">
-              No hay partidas registradas todavia
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {stats.weeks.map((week) => (
-              <section
-                key={week.weekNumber}
-                className="overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white"
-              >
-                {/* Week header */}
-                <div className="flex flex-col gap-2 border-b border-[#e2e8f0] bg-[#f8fafc] px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h2 className="text-base font-bold text-[#0f172a]">
-                      Semana {week.weekNumber}
-                    </h2>
-                    <p className="text-xs text-[#64748b]">
-                      {getWeekTitle(week.weekNumber)}
-                    </p>
-                  </div>
-                  <div className="flex gap-4 text-xs text-[#64748b]">
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3.5 w-3.5" />
-                      {week.totalPlayers} jugadores
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <GamepadIcon className="h-3.5 w-3.5" />
-                      {week.totalSessions} partidas
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Star className="h-3.5 w-3.5" />
-                      Promedio: {week.avgScore}/3
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      {formatTime(week.avgTimeMs)} promedio
-                    </span>
-                  </div>
+        {/* Tabbed content */}
+        <AdminTabs
+          winnersContent={
+            <div className="space-y-6">
+              {stats.weeks.length === 0 ? (
+                <div className="rounded-2xl border border-[#e2e8f0] bg-white p-12 text-center">
+                  <Trophy className="mx-auto mb-3 h-10 w-10 text-[#cbd5e1]" />
+                  <p className="text-sm font-semibold text-[#64748b]">
+                    No hay partidas registradas todavia
+                  </p>
                 </div>
-
-                {/* Winners */}
-                <div className="p-6">
-                  {week.winners.length === 0 ? (
-                    <p className="text-center text-sm text-[#94a3b8]">
-                      Sin ganadores esta semana
-                    </p>
-                  ) : (
-                    <div className="grid gap-4 sm:grid-cols-3">
-                      {week.winners.map((winner, i) => {
-                        const style = PLACE_STYLES[i];
-                        const Icon = style.icon;
-                        return (
-                          <div
-                            key={winner.userId}
-                            className={`rounded-xl border ${style.border} ${style.bg} p-4`}
-                          >
-                            <div className="mb-3 flex items-center gap-2">
-                              <Icon className={`h-5 w-5 ${style.text}`} />
-                              <span className={`text-xs font-bold uppercase tracking-wider ${style.text}`}>
-                                {style.label}
-                              </span>
-                            </div>
-                            <p className="text-base font-bold text-[#0f172a]">
-                              {winner.name}
-                            </p>
-                            <p className="mb-3 text-xs text-[#64748b]">
-                              {winner.email}
-                            </p>
-                            <div className="flex items-center gap-4 text-xs">
-                              <span className="flex items-center gap-1 font-semibold text-[#0f172a]">
-                                <Star className="h-3.5 w-3.5 fill-[#d97706] text-[#d97706]" />
-                                {winner.score}/3
-                              </span>
-                              <span className="flex items-center gap-1 text-[#64748b]">
-                                <Clock className="h-3.5 w-3.5" />
-                                {formatTime(winner.totalTimeMs)}
-                              </span>
-                              <span className="text-[#94a3b8]">
-                                {new Date(winner.completedAt).toLocaleDateString('es-AR', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  year: 'numeric',
-                                })}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
+              ) : (
+                stats.weeks.map((week) => (
+                  <section
+                    key={week.weekNumber}
+                    className="overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white"
+                  >
+                    <div className="flex flex-col gap-2 border-b border-[#e2e8f0] bg-[#f8fafc] px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h2 className="text-base font-bold text-[#0f172a]">
+                          Semana {week.weekNumber}
+                        </h2>
+                        <p className="text-xs text-[#64748b]">
+                          {getWeekTitle(week.weekNumber)}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-4 text-xs text-[#64748b]">
+                        <span className="flex items-center gap-1">
+                          <Users className="h-3.5 w-3.5" />
+                          {week.totalPlayers} jugadores
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <GamepadIcon className="h-3.5 w-3.5" />
+                          {week.totalSessions} partidas
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Star className="h-3.5 w-3.5" />
+                          Promedio: {week.avgScore}/3
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {formatTime(week.avgTimeMs)} promedio
+                        </span>
+                      </div>
                     </div>
-                  )}
+
+                    <div className="p-6">
+                      {week.winners.length === 0 ? (
+                        <p className="text-center text-sm text-[#94a3b8]">
+                          Sin ganadores esta semana
+                        </p>
+                      ) : (
+                        <div className="grid gap-4 sm:grid-cols-3">
+                          {week.winners.map((winner, i) => {
+                            const style = PLACE_STYLES[i];
+                            const Icon = style.icon;
+                            return (
+                              <div
+                                key={winner.userId}
+                                className={`rounded-xl border ${style.border} ${style.bg} p-4`}
+                              >
+                                <div className="mb-3 flex items-center gap-2">
+                                  <Icon className={`h-5 w-5 ${style.text}`} />
+                                  <span className={`text-xs font-bold uppercase tracking-wider ${style.text}`}>
+                                    {style.label}
+                                  </span>
+                                </div>
+                                <p className="text-base font-bold text-[#0f172a]">
+                                  {winner.name}
+                                </p>
+                                <div className="mt-1 space-y-0.5">
+                                  <p className="flex items-center gap-1.5 text-xs text-[#64748b]">
+                                    <Mail className="h-3 w-3" />
+                                    {winner.email}
+                                  </p>
+                                  <p className="flex items-center gap-1.5 text-xs text-[#64748b]">
+                                    <Phone className="h-3 w-3" />
+                                    {winner.phone || 'Sin telefono'}
+                                  </p>
+                                  <p className="flex items-center gap-1.5 text-xs text-[#64748b]">
+                                    <Monitor className="h-3 w-3" />
+                                    {parseDevice(winner.deviceInfo)}
+                                  </p>
+                                </div>
+                                <div className="mt-3 flex items-center gap-4 text-xs">
+                                  <span className="flex items-center gap-1 font-semibold text-[#0f172a]">
+                                    <Star className="h-3.5 w-3.5 fill-[#d97706] text-[#d97706]" />
+                                    {winner.score}/3
+                                  </span>
+                                  <span className="flex items-center gap-1 text-[#64748b]">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    {formatTime(winner.totalTimeMs)}
+                                  </span>
+                                  <span className="text-[#94a3b8]">
+                                    {new Date(winner.completedAt).toLocaleDateString('es-AR', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric',
+                                    })}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                ))
+              )}
+            </div>
+          }
+          historyContent={
+            <div className="overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white">
+              {stats.users.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Users className="mx-auto mb-3 h-10 w-10 text-[#cbd5e1]" />
+                  <p className="text-sm font-semibold text-[#64748b]">
+                    No hay usuarios registrados
+                  </p>
                 </div>
-              </section>
-            ))}
-          </div>
-        )}
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[#e2e8f0] bg-[#f8fafc]">
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#64748b]">
+                          Usuario
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#64748b]">
+                          Contacto
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#64748b]">
+                          Dispositivo
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-[#64748b]">
+                          Partidas
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-[#64748b]">
+                          Mejor
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-[#64748b]">
+                          Promedio
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#64748b]">
+                          Registro
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#f1f5f9]">
+                      {stats.users.map((user) => (
+                        <tr
+                          key={user.userId}
+                          className="transition-colors hover:bg-[#f8fafc]"
+                        >
+                          <td className="px-4 py-3">
+                            <p className="font-semibold text-[#0f172a]">{user.name}</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <p className="flex items-center gap-1.5 text-xs text-[#64748b]">
+                              <Mail className="h-3 w-3 shrink-0" />
+                              {user.email}
+                            </p>
+                            <p className="flex items-center gap-1.5 text-xs text-[#64748b] mt-0.5">
+                              <Phone className="h-3 w-3 shrink-0" />
+                              {user.phone || 'Sin telefono'}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <p className="flex items-center gap-1.5 text-xs text-[#64748b]">
+                              <Monitor className="h-3 w-3 shrink-0" />
+                              {parseDevice(user.deviceInfo)}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="font-semibold text-[#0f172a] tabular-nums">
+                              {user.totalGames}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#0f172a] tabular-nums">
+                              <Star className="h-3 w-3 fill-[#d97706] text-[#d97706]" />
+                              {user.bestScore}/3
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="tabular-nums text-[#64748b]">
+                              {user.avgScore}/3
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <p className="flex items-center gap-1.5 text-xs text-[#64748b]">
+                              <Calendar className="h-3 w-3 shrink-0" />
+                              {new Date(user.createdAt).toLocaleDateString('es-AR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                              })}
+                            </p>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          }
+        />
 
         {/* Footer */}
         <p className="mt-10 text-center text-[11px] font-semibold tracking-wider text-black">
