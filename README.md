@@ -186,6 +186,13 @@ Todas las tablas usan prefijo `trivia_` para aislamiento.
 - `id` (uuid, PK = token de la cookie httpOnly), `user_id`, `fingerprint_hash`, `ip_hash`, `user_agent`, `created_at`, `last_seen_at`, `revoked_at`, `revoked_reason` (`displaced`/`logout`/`expired`)
 - 1 fila activa (`revoked_at IS NULL`) por `user_id`. Al hacer login se revoca la anterior con `displaced` y se crea una nueva.
 
+**`trivia_admin_sessions`** — Sesiones del panel admin
+- `id` (uuid, PK = valor de la cookie `admin_session`), `ip_hash`, `user_agent`, `created_at`, `last_seen_at`, `expires_at`, `revoked_at`
+- TTL 8h. La cookie no contiene el secreto: lleva el UUID de la fila, que el server valida en cada request.
+
+**`trivia_admin_attempts`** — Audit log de intentos de login admin
+- `id`, `ip_hash`, `success`, `created_at`. Usado para rate limit por IP (5 fallidos / 15 min).
+
 ### Vista
 
 **`trivia_leaderboard`** — Mejor partida por usuario por semana (score DESC, time ASC)
@@ -204,11 +211,20 @@ Todas las tablas usan prefijo `trivia_` para aislamiento.
 - **1 sesion auth activa por usuario** — al loguearse desde un device nuevo, la sesion previa queda revocada como `displaced`. El device viejo se entera al siguiente server action (recibe `error: 'session_expired'`) y desloguea con aviso al usuario.
 - Cookie de sesion: `trivia_session` (httpOnly, secure, sameSite=Lax, 30 dias). El UUID adentro es el id de la fila en `trivia_auth_sessions`. La revocacion real la maneja el server, no el TTL del cookie.
 
+### Admin auth
+
+- Login en `/admin/login`. Credenciales por env vars: `ADMIN_USERNAME` y `ADMIN_PASSWORD_HASH` (SHA-256 hex de la password). Si no están definidas, se usa el fallback historico — **rotar en producción**.
+- Comparaciones timing-safe (constant-time) para usuario y hash.
+- **Rate limit**: 5 logins fallidos por IP cada 15 min (`trivia_admin_attempts`).
+- Cookie `admin_session` (httpOnly, secure, sameSite=Lax, 8h). Lleva el UUID de la fila en `trivia_admin_sessions` — el server valida que la fila exista, no este revocada y no haya expirado en cada request. La cookie por si sola no autoriza nada.
+- Logout revoca la fila en DB y limpia la cookie.
+
 ### Migraciones SQL
 
 Las migraciones viven en `scripts/migrations/`:
 
 - `2026-04-15_auth_sessions.sql` — tabla `trivia_auth_sessions` + indice IP en `trivia_fingerprints`
+- `2026-04-15_admin_sessions.sql` — tablas `trivia_admin_sessions` + `trivia_admin_attempts` (admin auth hardening)
 
 ## Sistema de medallas
 

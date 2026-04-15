@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import { loginAdmin, isAdminAuthenticated } from '@/app/actions/admin-auth';
 import { GamepadIcon } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Admin Login · Trivia Boston',
 };
