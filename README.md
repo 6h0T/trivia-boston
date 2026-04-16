@@ -80,7 +80,7 @@ trivia-boston/
 │   │   ├── BottomNav.tsx          # Barra de navegacion inferior
 │   │   └── StadiumBackground.tsx  # Fondo animado
 │   ├── data/
-│   │   └── questions.ts           # Preguntas por semana
+│   │   └── questions.ts           # Pool de preguntas + randomizer (3 al azar por partida)
 │   ├── hooks/
 │   │   ├── useAuth.ts             # Estado de autenticacion (localStorage)
 │   │   ├── useGameState.ts        # Maquina de estados del juego
