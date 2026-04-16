@@ -2,6 +2,7 @@
 
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { requireActiveSession } from '@/lib/auth/auth-session';
+import { isWeekAvailable } from '@/data/questions';
 
 type SaveSessionResult = { ok: true } | { ok: false; error: string };
 
@@ -14,6 +15,10 @@ export async function saveSession(
   const session = await requireActiveSession();
   if (!session.ok) {
     return { ok: false, error: 'session_expired' };
+  }
+
+  if (!isWeekAvailable(weekNumber)) {
+    return { ok: false, error: 'Trivia no disponible hoy' };
   }
 
   if (score < 0 || score > 3) return { ok: false, error: 'Score invalido' };

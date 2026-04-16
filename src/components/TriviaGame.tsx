@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { useGameState } from '@/hooks/useGameState';
 import { useAuth } from '@/hooks/useAuth';
+import { getCurrentWeekAvailability } from '@/data/questions';
 import StadiumBackground from './StadiumBackground';
 import AuthScreen from './AuthScreen';
 import StartScreen from './StartScreen';
@@ -33,6 +34,8 @@ export default function TriviaGame() {
     showProfile,
     showBostonPlus,
   } = useGameState();
+
+  const weekAvailability = getCurrentWeekAvailability();
 
   // Sync stored user → game phase on hydrate
   useEffect(() => {
@@ -120,6 +123,8 @@ export default function TriviaGame() {
             userName={user.name}
             weekTitle={state.currentWeek.title}
             weekDescription={state.currentWeek.description}
+            locked={!weekAvailability.available}
+            availableDate={weekAvailability.availableDate}
             onStart={startGame}
           />
         )}

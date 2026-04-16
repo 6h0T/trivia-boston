@@ -111,6 +111,8 @@ interface WeekPool {
   weekNumber: number;
   title: string;
   description?: string;
+  /** Date string YYYY-MM-DD when this trivia is playable (local timezone) */
+  availableDate: string;
   pool: Question[];
 }
 
@@ -119,6 +121,7 @@ const weekPools: WeekPool[] = [
     weekNumber: 1,
     title: 'Primer Mundial de la Historia',
     description: 'Uruguay 1930 - El torneo que lo empezó todo',
+    availableDate: '2026-04-22',
     pool: week1Pool,
   },
 ];
@@ -156,7 +159,35 @@ export const weeks = weekPools.map((wp) => ({
   weekNumber: wp.weekNumber,
   title: wp.title,
   description: wp.description,
+  availableDate: wp.availableDate,
 }));
+
+/** Get today's date as YYYY-MM-DD in local timezone */
+function todayLocal(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Check if a given week is playable today */
+export function isWeekAvailable(weekNumber: number): boolean {
+  const wp = weekPools.find((w) => w.weekNumber === weekNumber);
+  if (!wp) return false;
+  return todayLocal() === wp.availableDate;
+}
+
+/** Availability info for the current week */
+export function getCurrentWeekAvailability(): {
+  available: boolean;
+  availableDate: string;
+  weekNumber: number;
+} {
+  const wp = weekPools[0];
+  return {
+    available: todayLocal() === wp.availableDate,
+    availableDate: wp.availableDate,
+    weekNumber: wp.weekNumber,
+  };
+}
 
 /* ───────────── Public API ───────────── */
 

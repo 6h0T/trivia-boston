@@ -2,19 +2,31 @@
 
 import Image from 'next/image';
 import { motion } from 'motion/react';
-import { Play, Zap, Clock } from 'lucide-react';
+import { Play, Zap, Clock, Lock, CalendarDays } from 'lucide-react';
 
 interface StartScreenProps {
   userName: string;
   weekTitle: string;
   weekDescription?: string;
+  locked?: boolean;
+  availableDate?: string;
   onStart: () => void;
+}
+
+function formatAvailableDate(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  return `${days[date.getDay()]} ${d} de ${months[date.getMonth()]}`;
 }
 
 export default function StartScreen({
   userName,
   weekTitle,
   weekDescription,
+  locked = false,
+  availableDate,
   onStart,
 }: StartScreenProps) {
   return (
@@ -111,18 +123,42 @@ export default function StartScreen({
           </div>
         </motion.div>
 
-        {/* Primary CTA - Boston gradient */}
-        <motion.button
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.65 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onStart}
-          className="boston-cta btn-shine flex w-full items-center justify-center gap-2.5 px-6 py-4 text-[15px] touch-manipulation"
-        >
-          <Play className="h-4 w-4" fill="currentColor" strokeWidth={2} />
-          Jugar ahora
-        </motion.button>
+        {locked ? (
+          /* Locked state */
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.65 }}
+          >
+            <div className="flex w-full flex-col items-center gap-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-5 py-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#1d3969]/10">
+                <Lock className="h-5 w-5 text-[#1d3969]" strokeWidth={2} />
+              </div>
+              <p className="text-sm font-semibold text-[#0f172a]">
+                Trivia no disponible
+              </p>
+              {availableDate && (
+                <div className="flex items-center gap-1.5 text-xs text-[#64748b]">
+                  <CalendarDays className="h-3.5 w-3.5" strokeWidth={2} />
+                  <span>Disponible el {formatAvailableDate(availableDate)}</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ) : (
+          /* Primary CTA - Boston gradient */
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.65 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onStart}
+            className="boston-cta btn-shine flex w-full items-center justify-center gap-2.5 px-6 py-4 text-[15px] touch-manipulation"
+          >
+            <Play className="h-4 w-4" fill="currentColor" strokeWidth={2} />
+            Jugar ahora
+          </motion.button>
+        )}
       </div>
     </motion.div>
   );
