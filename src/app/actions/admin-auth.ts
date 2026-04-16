@@ -4,14 +4,9 @@ import { cookies, headers } from 'next/headers';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { sha256Hex } from '@/lib/auth/hash';
 
-// Admin credentials. Override in production via env vars.
-// The fallback hash matches the historical password — it MUST be rotated
-// in any environment exposed to users by setting ADMIN_PASSWORD_HASH
-// (SHA-256 hex of the new password).
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME ?? 'admin';
-const ADMIN_PASSWORD_HASH =
-  process.env.ADMIN_PASSWORD_HASH ??
-  'c958feb3c8f5813d63c7fdac1816cccb3c5a7023f8f5b3e58dabe57885de0a81';
+// Admin credentials — MUST be set via env vars. Login is disabled without them.
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME ?? '';
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH ?? '';
 
 const COOKIE_NAME = 'admin_session';
 const SESSION_TTL_HOURS = 8;
@@ -46,6 +41,10 @@ export async function loginAdmin(
   username: string,
   password: string
 ): Promise<{ ok: boolean; error?: string }> {
+  if (!ADMIN_USERNAME || !ADMIN_PASSWORD_HASH) {
+    return { ok: false, error: 'Admin no configurado' };
+  }
+
   const ipHash = await getClientIpHash();
   const supabase = createSupabaseServerClient();
 

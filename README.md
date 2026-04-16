@@ -38,6 +38,8 @@ npm start
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Anon/publishable key de Supabase |
+| `ADMIN_USERNAME` | Usuario del panel admin |
+| `ADMIN_PASSWORD_HASH` | SHA-256 hex de la password admin (`echo -n 'tu_password' \| sha256sum`) |
 
 ## Estructura del proyecto
 
@@ -213,7 +215,7 @@ Todas las tablas usan prefijo `trivia_` para aislamiento.
 
 ### Admin auth
 
-- Login en `/admin/login`. Credenciales por env vars: `ADMIN_USERNAME` y `ADMIN_PASSWORD_HASH` (SHA-256 hex de la password). Si no están definidas, se usa el fallback historico — **rotar en producción**.
+- Login en `/admin/login`. Credenciales por env vars: `ADMIN_USERNAME` y `ADMIN_PASSWORD_HASH` (SHA-256 hex de la password). Sin env vars el login admin queda deshabilitado.
 - Comparaciones timing-safe (constant-time) para usuario y hash.
 - **Rate limit**: 5 logins fallidos por IP cada 15 min (`trivia_admin_attempts`).
 - Cookie `admin_session` (httpOnly, secure, sameSite=Lax, 8h). Lleva el UUID de la fila en `trivia_admin_sessions` — el server valida que la fila exista, no este revocada y no haya expirado en cada request. La cookie por si sola no autoriza nada.
