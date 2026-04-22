@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { useGameState } from '@/hooks/useGameState';
 import { useAuth } from '@/hooks/useAuth';
@@ -35,7 +35,17 @@ export default function TriviaGame() {
     showBostonPlus,
   } = useGameState();
 
-  const weekAvailability = getCurrentWeekAvailability();
+  const [weekAvailability, setWeekAvailability] = useState(() =>
+    getCurrentWeekAvailability()
+  );
+
+  // Re-check availability every 30s so lock/unlock happens without reload
+  useEffect(() => {
+    const id = setInterval(() => {
+      setWeekAvailability(getCurrentWeekAvailability());
+    }, 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   // Sync stored user → game phase on hydrate
   useEffect(() => {
@@ -125,6 +135,9 @@ export default function TriviaGame() {
             weekDescription={state.currentWeek.description}
             locked={!weekAvailability.available}
             availableDate={weekAvailability.availableDate}
+            openTime={weekAvailability.openTime}
+            closeTime={weekAvailability.closeTime}
+            status={weekAvailability.status}
             onStart={startGame}
           />
         )}

@@ -10,6 +10,9 @@ interface StartScreenProps {
   weekDescription?: string;
   locked?: boolean;
   availableDate?: string;
+  openTime?: string;
+  closeTime?: string;
+  status?: 'before' | 'open' | 'after';
   onStart: () => void;
 }
 
@@ -27,8 +30,12 @@ export default function StartScreen({
   weekDescription,
   locked = false,
   availableDate,
+  openTime,
+  closeTime,
+  status = 'before',
   onStart,
 }: StartScreenProps) {
+  const lockedTitle = status === 'after' ? 'Trivia finalizada' : 'Trivia no disponible';
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -135,12 +142,25 @@ export default function StartScreen({
                 <Lock className="h-5 w-5 text-[#1d3969]" strokeWidth={2} />
               </div>
               <p className="text-sm font-semibold text-[#0f172a]">
-                Trivia no disponible
+                {lockedTitle}
               </p>
               {availableDate && (
-                <div className="flex items-center gap-1.5 text-xs text-[#64748b]">
-                  <CalendarDays className="h-3.5 w-3.5" strokeWidth={2} />
-                  <span>Disponible el {formatAvailableDate(availableDate)}</span>
+                <div className="flex flex-col items-center gap-1 text-xs text-[#64748b]">
+                  <div className="flex items-center gap-1.5">
+                    <CalendarDays className="h-3.5 w-3.5" strokeWidth={2} />
+                    <span>
+                      {status === 'after' ? 'Cerró el' : 'Disponible el'}{' '}
+                      {formatAvailableDate(availableDate)}
+                    </span>
+                  </div>
+                  {openTime && closeTime && (
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5" strokeWidth={2} />
+                      <span>
+                        {openTime} a {closeTime} hs (UTC-3)
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
