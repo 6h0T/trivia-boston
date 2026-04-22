@@ -13,6 +13,10 @@ interface StartScreenProps {
   openTime?: string;
   closeTime?: string;
   status?: 'before' | 'open' | 'after';
+  attemptsRemaining?: number | null;
+  attemptsLimit?: number;
+  isStarting?: boolean;
+  startError?: string | null;
   onStart: () => void;
 }
 
@@ -33,9 +37,20 @@ export default function StartScreen({
   openTime,
   closeTime,
   status = 'before',
+  attemptsRemaining = null,
+  attemptsLimit = 3,
+  isStarting = false,
+  startError = null,
   onStart,
 }: StartScreenProps) {
-  const lockedTitle = status === 'after' ? 'Trivia finalizada' : 'Trivia no disponible';
+  const dailyLimitReached =
+    attemptsRemaining !== null && attemptsRemaining <= 0;
+  const effectiveLocked = locked || dailyLimitReached;
+  const lockedTitle = dailyLimitReached
+    ? 'Agotaste tus intentos de hoy'
+    : status === 'after'
+      ? 'Trivia finalizada'
+      : 'Trivia no disponible';
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -130,7 +145,7 @@ export default function StartScreen({
           </div>
         </motion.div>
 
-        {locked ? (
+        {effectiveLocked ? (
           /* Locked state */
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -144,40 +159,79 @@ export default function StartScreen({
               <p className="text-sm font-semibold text-[#0f172a]">
                 {lockedTitle}
               </p>
-              {availableDate && (
-                <div className="flex flex-col items-center gap-1 text-xs text-[#64748b]">
-                  <div className="flex items-center gap-1.5">
-                    <CalendarDays className="h-3.5 w-3.5" strokeWidth={2} />
-                    <span>
-                      {status === 'after' ? 'Cerró el' : 'Disponible el'}{' '}
-                      {formatAvailableDate(availableDate)}
-                    </span>
-                  </div>
-                  {openTime && closeTime && (
+              {dailyLimitReached ? (
+                <p className="text-xs text-[#64748b]">
+                  Volvé mañana para jugar de nuevo.
+                </p>
+              ) : (
+                availableDate && (
+                  <div className="flex flex-col items-center gap-1 text-xs text-[#64748b]">
                     <div className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5" strokeWidth={2} />
+                      <CalendarDays className="h-3.5 w-3.5" strokeWidth={2} />
                       <span>
-                        {openTime} a {closeTime} hs (UTC-3)
+                        {status === 'after' ? 'Cerró el' : 'Disponible el'}{' '}
+                        {formatAvailableDate(availableDate)}
                       </span>
                     </div>
-                  )}
-                </div>
+                    {openTime && closeTime && (
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" strokeWidth={2} />
+                        <span>
+                          {openTime} a {closeTime} hs (UTC-3)
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )
               )}
             </div>
           </motion.div>
         ) : (
-          /* Primary CTA - Boston gradient */
-          <motion.button
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.65 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onStart}
-            className="boston-cta btn-shine flex w-full items-center justify-center gap-2.5 px-6 py-4 text-[15px] touch-manipulation"
-          >
-            <Play className="h-4 w-4" fill="currentColor" strokeWidth={2} />
-            Jugar ahora
-          </motion.button>
+          <>
+            {/* Primary CTA - Boston gradient */}
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.65 }}
+              whileTap={isStarting ? undefined : { scale: 0.98 }}
+              onClick={onStart}
+              disabled={isStarting}
+              className="boston-cta btn-shine flex w-full items-center justify-center gap-2.5 px-6 py-4 text-[15px] touch-manipulation disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isStarting ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  Cargando…
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4" fill="currentColor" strokeWidth={2} />
+                  Jugar ahora
+                </>
+              )}
+            </motion.button>
+            {startError && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-3 text-xs font-medium text-tertiary"
+              >
+                {startError}
+              </motion.p>
+            )}
+            {attemptsRemaining !== null && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.75 }}
+                className="mt-3 text-xs font-medium text-outline"
+              >
+                Te {attemptsRemaining === 1 ? 'queda' : 'quedan'}{' '}
+                {attemptsRemaining} de {attemptsLimit}{' '}
+                {attemptsRemaining === 1 ? 'intento' : 'intentos'} hoy
+              </motion.p>
+            )}
+          </>
         )}
       </div>
     </motion.div>

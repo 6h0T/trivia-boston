@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import {
   RotateCcw,
@@ -9,19 +8,22 @@ import {
   Clock,
   Star,
   Trophy,
+  AlertTriangle,
 } from 'lucide-react';
-import { AnswerResult, WeeklyTrivia } from '@/types/game';
-import { saveSession } from '@/app/actions/sessions';
+import { AnswerResult, PublicQuestion } from '@/types/game';
+import type { SubmitError } from '@/hooks/useGameState';
 
 interface ResultsScreenProps {
   results: AnswerResult[];
-  week: WeeklyTrivia;
+  questions: PublicQuestion[];
+  week: { weekNumber: number; title: string; description?: string };
   score: number;
   totalTimeMs: number;
-  userId: string;
+  attemptsRemaining: number | null;
+  submitError: SubmitError | null;
+  isSubmitting: boolean;
   onRestart: () => void;
   onShowLeaderboard: () => void;
-  onSessionExpired: () => void;
 }
 
 function getMessage(score: number): { text: string; sub: string } {
@@ -46,34 +48,90 @@ function formatTime(ms: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+function errorMessage(err: SubmitError): string {
+  switch (err) {
+    case 'daily_limit_reached':
+      return 'Ya usaste tus 3 intentos de hoy. Volvé mañana.';
+    case 'already_submitted':
+      return 'Esta partida ya fue registrada.';
+    case 'invalid_attempt':
+      return 'La partida no es válida. Probá de nuevo.';
+    case 'save_failed':
+      return 'No pudimos guardar tu partida. Probá de nuevo.';
+    case 'session_expired':
+      return 'Se cerró tu sesión. Volvé a iniciar sesión.';
+    default:
+      return 'Ocurrió un error. Probá de nuevo.';
+  }
+}
+
 export default function ResultsScreen({
   results,
+  questions,
   week,
   score,
   totalTimeMs,
-  userId,
+  attemptsRemaining,
+  submitError,
+  isSubmitting,
   onRestart,
   onShowLeaderboard,
-  onSessionExpired,
 }: ResultsScreenProps) {
   const { text: message, sub: subtitle } = getMessage(score);
   const isPerfect = score === 3;
-  const savedRef = useRef(false);
+  const limitReached =
+    submitError === 'daily_limit_reached' || attemptsRemaining === 0;
 
-  // Save the session to Supabase once on mount
-  useEffect(() => {
-    if (savedRef.current) return;
-    savedRef.current = true;
-    saveSession(userId, week.weekNumber, score, totalTimeMs)
-      .then((result) => {
-        if (!result.ok && result.error === 'session_expired') {
-          onSessionExpired();
-        }
-      })
-      .catch(() => {
-        /* silent fail — player shouldn't block on network */
-      });
-  }, [userId, week.weekNumber, score, totalTimeMs, onSessionExpired]);
+  // Build a questionId → PublicQuestion lookup so results match by id.
+  const questionsById = new Map<string, PublicQuestion>();
+  for (const q of questions) questionsById.set(q.id, q);
+
+  if (isSubmitting) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-center px-5 pb-nav pt-6 sm:px-6 sm:pt-10"
+      >
+        <div className="glass-card-elevated w-full max-w-sm rounded-2xl p-8 text-center">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+          <p className="text-sm font-semibold text-on-surface">
+            Calculando resultados…
+          </p>
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (submitError && submitError !== 'daily_limit_reached') {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-center px-5 pb-nav pt-6 sm:px-6 sm:pt-10"
+      >
+        <div className="glass-card-elevated w-full max-w-sm rounded-2xl p-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-tertiary/15 text-tertiary">
+            <AlertTriangle className="h-6 w-6" strokeWidth={2.5} />
+          </div>
+          <p className="mb-4 text-sm font-semibold text-on-surface">
+            {errorMessage(submitError)}
+          </p>
+          <button
+            onClick={onRestart}
+            className="boston-cta btn-shine flex w-full items-center justify-center gap-2.5 px-6 py-4 text-sm touch-manipulation"
+          >
+            <RotateCcw className="h-5 w-5" />
+            Reintentar
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -163,7 +221,7 @@ export default function ResultsScreen({
         {/* Question results */}
         <div className="mb-5 space-y-2 sm:mb-6 sm:space-y-2.5">
           {results.map((result, i) => {
-            const question = week.questions[i];
+            const question = questionsById.get(result.questionId);
             return (
               <motion.div
                 key={result.questionId}
@@ -187,10 +245,7 @@ export default function ResultsScreen({
                 </div>
                 <div className="min-w-0">
                   <p className="text-[13px] font-medium leading-snug text-on-surface/80">
-                    {question.text}
-                  </p>
-                  <p className="mt-1 text-[11px] font-semibold text-secondary/80">
-                    {question.options[question.correctIndex]}
+                    {question?.text ?? ''}
                   </p>
                 </div>
               </motion.div>
@@ -198,15 +253,34 @@ export default function ResultsScreen({
           })}
         </div>
 
+        {/* Attempts remaining / limit reached */}
+        {attemptsRemaining !== null && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.85 }}
+            className={`mb-3 text-center text-xs font-medium ${
+              limitReached ? 'text-tertiary' : 'text-outline'
+            }`}
+          >
+            {limitReached
+              ? 'Ya usaste tus 3 intentos de hoy. Volvé mañana.'
+              : `Te ${attemptsRemaining === 1 ? 'queda' : 'quedan'} ${attemptsRemaining} de 3 ${
+                  attemptsRemaining === 1 ? 'intento' : 'intentos'
+                } hoy`}
+          </motion.p>
+        )}
+
         {/* Primary: restart */}
         <motion.button
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9 }}
-          whileTap={{ scale: 0.97 }}
-          whileHover={{ y: -2 }}
+          whileTap={{ scale: limitReached ? 1 : 0.97 }}
+          whileHover={{ y: limitReached ? 0 : -2 }}
           onClick={onRestart}
-          className="boston-cta btn-shine flex w-full items-center justify-center gap-2.5 px-6 py-4 text-sm touch-manipulation"
+          disabled={limitReached}
+          className="boston-cta btn-shine flex w-full items-center justify-center gap-2.5 px-6 py-4 text-sm touch-manipulation disabled:cursor-not-allowed disabled:opacity-50"
         >
           <RotateCcw className="h-5 w-5" />
           Jugar de nuevo

@@ -2,36 +2,26 @@
 
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { requireActiveSession } from '@/lib/auth/auth-session';
-import { isWeekAvailable } from '@/data/questions';
 
-type SaveSessionResult = { ok: true } | { ok: false; error: string };
-
-export async function saveSession(
-  _userId: string,
-  weekNumber: number,
-  score: number,
-  totalTimeMs: number
-): Promise<SaveSessionResult> {
+export async function getDailyAttempts(): Promise<{
+  used: number;
+  remaining: number;
+  limit: number;
+}> {
   const session = await requireActiveSession();
-  if (!session.ok) {
-    return { ok: false, error: 'session_expired' };
-  }
-
-  if (!isWeekAvailable(weekNumber)) {
-    return { ok: false, error: 'Trivia no disponible hoy' };
-  }
-
-  if (score < 0 || score > 3) return { ok: false, error: 'Score invalido' };
-  if (totalTimeMs < 0) return { ok: false, error: 'Tiempo invalido' };
+  if (!session.ok) return { used: 0, remaining: 3, limit: 3 };
 
   const supabase = createSupabaseServerClient();
-  const { error } = await supabase.from('trivia_sessions').insert({
-    user_id: session.userId,
-    week_number: weekNumber,
-    score,
-    total_time_ms: totalTimeMs,
+  const { data } = await supabase.rpc('get_daily_trivia_attempts', {
+    p_session_id: session.sessionId,
   });
-
-  if (error) return { ok: false, error: 'No se pudo guardar la partida' };
-  return { ok: true };
+  if (!data || typeof data !== 'object') {
+    return { used: 0, remaining: 3, limit: 3 };
+  }
+  const p = data as Record<string, unknown>;
+  return {
+    used: Number(p.used ?? 0),
+    remaining: Number(p.remaining ?? 3),
+    limit: Number(p.limit ?? 3),
+  };
 }

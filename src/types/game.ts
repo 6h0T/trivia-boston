@@ -6,19 +6,24 @@ export interface Question {
   category: string;
 }
 
+export interface PublicQuestion {
+  id: string;
+  text: string;
+  options: string[];
+  category: string;
+}
+
 export interface WeeklyTrivia {
   weekNumber: number;
   title: string;
   description?: string;
-  questions: [Question, Question, Question];
+  questions: [PublicQuestion, PublicQuestion, PublicQuestion];
 }
 
 export type AnswerResult = {
   questionId: string;
   selectedIndex: number | null;
-  correctIndex: number;
   isCorrect: boolean;
-  timeRemaining: number;
 };
 
 export type GamePhase =
@@ -38,8 +43,8 @@ export interface GameState {
   results: AnswerResult[];
   selectedAnswer: number | null;
   timerActive: boolean;
-  startTimestamp: number | null;
-  totalTimeMs: number | null;
+  attemptId: string | null;
+  startedAtMs: number | null;
 }
 
 export interface TriviaUser {

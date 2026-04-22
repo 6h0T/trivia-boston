@@ -1,151 +1,258 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { GameState, GamePhase, AnswerResult } from '@/types/game';
-import { getCurrentWeek } from '@/data/questions';
+import { GamePhase, AnswerResult, PublicQuestion } from '@/types/game';
+import { startAttempt, submitAttempt } from '@/app/actions/attempts';
+import { weeks } from '@/data/questions';
 
-function createInitialState(phase: GamePhase = 'auth'): GameState {
+export type StartError =
+  | 'session_expired'
+  | 'week_not_available'
+  | 'daily_limit_reached';
+
+export type SubmitError =
+  | 'session_expired'
+  | 'invalid_attempt'
+  | 'already_submitted'
+  | 'daily_limit_reached'
+  | 'save_failed';
+
+export interface WeekMeta {
+  weekNumber: number;
+  title: string;
+  description?: string;
+}
+
+export interface GameStateV2 {
+  phase: GamePhase;
+  weekMeta: WeekMeta | null;
+  questions: PublicQuestion[];
+  attemptId: string | null;
+  currentQuestionIndex: number;
+  answers: { questionId: string; selectedIndex: number | null }[];
+  selectedAnswer: number | null;
+  timerActive: boolean;
+  finalResults: AnswerResult[];
+  finalScore: number;
+  finalTotalTimeMs: number;
+  startError: StartError | null;
+  submitError: SubmitError | null;
+  attemptsRemaining: number | null;
+  isStarting: boolean;
+  isSubmitting: boolean;
+}
+
+function createInitialState(phase: GamePhase = 'auth'): GameStateV2 {
   return {
     phase,
-    currentWeek: getCurrentWeek(),
+    weekMeta: null,
+    questions: [],
+    attemptId: null,
     currentQuestionIndex: 0,
-    results: [],
+    answers: [],
     selectedAnswer: null,
     timerActive: false,
-    startTimestamp: null,
-    totalTimeMs: null,
+    finalResults: [],
+    finalScore: 0,
+    finalTotalTimeMs: 0,
+    startError: null,
+    submitError: null,
+    attemptsRemaining: null,
+    isStarting: false,
+    isSubmitting: false,
   };
 }
 
+/** Default week number used when starting a new attempt. Taken from the first
+ *  week metadata exported from `@/data/questions` (client-safe). */
+function getDefaultWeekNumber(): number {
+  return weeks[0]?.weekNumber ?? 1;
+}
+
 export function useGameState() {
-  const [state, setState] = useState<GameState>(() => createInitialState('auth'));
+  const [state, setState] = useState<GameStateV2>(() =>
+    createInitialState('auth')
+  );
 
   const authenticate = useCallback(() => {
-    setState((prev) => ({ ...prev, phase: 'start' as GamePhase }));
+    setState((prev) => ({ ...prev, phase: 'start' }));
   }, []);
 
-  const startGame = useCallback(() => {
-    const week = getCurrentWeek();
-    setState({
-      phase: 'playing',
-      currentWeek: week,
-      currentQuestionIndex: 0,
-      results: [],
-      selectedAnswer: null,
-      timerActive: true,
-      startTimestamp: Date.now(),
-      totalTimeMs: null,
-    });
-  }, []);
+  const startGame = useCallback(async () => {
+    setState((prev) => ({
+      ...prev,
+      isStarting: true,
+      startError: null,
+      submitError: null,
+    }));
 
-  const selectAnswer = useCallback(
-    (index: number, timeRemaining: number) => {
-      setState((prev) => {
-        if (prev.phase !== 'playing') return prev;
-
-        const question = prev.currentWeek.questions[prev.currentQuestionIndex];
-        const result: AnswerResult = {
-          questionId: question.id,
-          selectedIndex: index,
-          correctIndex: question.correctIndex,
-          isCorrect: index === question.correctIndex,
-          timeRemaining,
-        };
-
-        return {
+    const weekNumber = getDefaultWeekNumber();
+    try {
+      const res = await startAttempt(weekNumber);
+      if (res.ok) {
+        setState({
+          ...createInitialState('playing'),
+          weekMeta: {
+            weekNumber: res.weekNumber,
+            title: res.weekTitle,
+            description: res.weekDescription,
+          },
+          questions: res.questions,
+          attemptId: res.attemptId,
+          timerActive: true,
+          isStarting: false,
+        });
+      } else {
+        setState((prev) => ({
           ...prev,
-          phase: 'revealing' as GamePhase,
-          selectedAnswer: index,
-          timerActive: false,
-          results: [...prev.results, result],
-        };
-      });
+          phase: 'start',
+          startError: res.error,
+          isStarting: false,
+        }));
+      }
+    } catch {
+      setState((prev) => ({
+        ...prev,
+        phase: 'start',
+        startError: 'week_not_available',
+        isStarting: false,
+      }));
+    }
+  }, []);
+
+  const submitFinal = useCallback(
+    async (
+      attemptId: string,
+      answers: { questionId: string; selectedIndex: number | null }[]
+    ) => {
+      try {
+        const res = await submitAttempt(attemptId, answers);
+        if (res.ok) {
+          setState((prev) => ({
+            ...prev,
+            phase: 'finished',
+            finalResults: res.results,
+            finalScore: res.score,
+            finalTotalTimeMs: res.totalTimeMs,
+            attemptsRemaining: res.attemptsRemaining,
+            submitError: null,
+            isSubmitting: false,
+          }));
+        } else {
+          setState((prev) => ({
+            ...prev,
+            phase: 'finished',
+            submitError: res.error,
+            isSubmitting: false,
+          }));
+        }
+      } catch {
+        setState((prev) => ({
+          ...prev,
+          phase: 'finished',
+          submitError: 'save_failed',
+          isSubmitting: false,
+        }));
+      }
     },
     []
   );
 
-  const handleTimeout = useCallback(() => {
-    setState((prev) => {
-      if (prev.phase !== 'playing') return prev;
-
-      const question = prev.currentWeek.questions[prev.currentQuestionIndex];
-      const result: AnswerResult = {
-        questionId: question.id,
-        selectedIndex: null,
-        correctIndex: question.correctIndex,
-        isCorrect: false,
-        timeRemaining: 0,
-      };
-
-      return {
-        ...prev,
-        phase: 'revealing' as GamePhase,
-        selectedAnswer: null,
-        timerActive: false,
-        results: [...prev.results, result],
-      };
-    });
-  }, []);
-
   const nextQuestion = useCallback(() => {
     setState((prev) => {
-      if (prev.currentQuestionIndex >= 2) {
-        const totalTimeMs = prev.startTimestamp
-          ? Date.now() - prev.startTimestamp
-          : 0;
+      if (prev.currentQuestionIndex >= prev.questions.length - 1) {
+        // About to submit — kick off the async submit outside the setter.
+        if (prev.attemptId) {
+          void submitFinal(prev.attemptId, prev.answers);
+        }
         return {
           ...prev,
-          phase: 'finished' as GamePhase,
-          totalTimeMs,
+          phase: 'finished',
+          isSubmitting: true,
+          selectedAnswer: null,
+          timerActive: false,
         };
       }
 
       return {
         ...prev,
-        phase: 'playing' as GamePhase,
+        phase: 'playing',
         currentQuestionIndex: prev.currentQuestionIndex + 1,
         selectedAnswer: null,
         timerActive: true,
       };
     });
+  }, [submitFinal]);
+
+  const selectAnswer = useCallback((index: number) => {
+    setState((prev) => {
+      if (prev.phase !== 'playing') return prev;
+      const question = prev.questions[prev.currentQuestionIndex];
+      if (!question) return prev;
+      return {
+        ...prev,
+        phase: 'revealing',
+        selectedAnswer: index,
+        timerActive: false,
+        answers: [
+          ...prev.answers,
+          { questionId: question.id, selectedIndex: index },
+        ],
+      };
+    });
+  }, []);
+
+  const handleTimeout = useCallback(() => {
+    setState((prev) => {
+      if (prev.phase !== 'playing') return prev;
+      const question = prev.questions[prev.currentQuestionIndex];
+      if (!question) return prev;
+      return {
+        ...prev,
+        phase: 'revealing',
+        selectedAnswer: null,
+        timerActive: false,
+        answers: [
+          ...prev.answers,
+          { questionId: question.id, selectedIndex: null },
+        ],
+      };
+    });
   }, []);
 
   const resetGame = useCallback(() => {
-    setState((prev) => ({
-      ...createInitialState('start'),
-      currentWeek: prev.currentWeek,
-    }));
-  }, []);
-
-  const showLeaderboard = useCallback(() => {
-    setState((prev) => ({ ...prev, phase: 'leaderboard' as GamePhase }));
+    setState(() => createInitialState('start'));
   }, []);
 
   const backToStart = useCallback(() => {
-    setState((prev) => ({
-      ...createInitialState('start'),
-      currentWeek: prev.currentWeek,
-    }));
+    setState(() => createInitialState('start'));
   }, []);
 
   const logoutPhase = useCallback(() => {
     setState(() => createInitialState('auth'));
   }, []);
 
+  const showLeaderboard = useCallback(() => {
+    setState((prev) => ({ ...prev, phase: 'leaderboard' }));
+  }, []);
+
   const showProfile = useCallback(() => {
-    setState((prev) => ({ ...prev, phase: 'profile' as GamePhase }));
+    setState((prev) => ({ ...prev, phase: 'profile' }));
   }, []);
 
   const showBostonPlus = useCallback(() => {
-    setState((prev) => ({ ...prev, phase: 'bostonplus' as GamePhase }));
+    setState((prev) => ({ ...prev, phase: 'bostonplus' }));
   }, []);
 
   const currentQuestion =
-    state.phase === 'playing' || state.phase === 'revealing'
-      ? state.currentWeek.questions[state.currentQuestionIndex]
+    (state.phase === 'playing' || state.phase === 'revealing') &&
+    state.questions.length > 0
+      ? state.questions[state.currentQuestionIndex] ?? null
       : null;
 
-  const score = state.results.filter((r) => r.isCorrect).length;
+  // While playing, `finalResults` is empty; `score` is derived from submitted
+  // server results once the game is finished.
+  const score = state.finalScore;
 
   return {
     state,

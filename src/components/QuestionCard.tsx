@@ -2,24 +2,25 @@
 
 import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, XCircle, AlarmClock } from 'lucide-react';
-import { Question, AnswerResult } from '@/types/game';
+import { ChevronRight } from 'lucide-react';
+import { PublicQuestion, AnswerResult } from '@/types/game';
 import { useCountdown } from '@/hooks/useCountdown';
 import CountdownTimer from './CountdownTimer';
 import AnswerOption from './AnswerOption';
 import ProgressDots from './ProgressDots';
 
 const TIMER_DURATION = 15;
-const REVEAL_DURATION = 2500;
+const REVEAL_DURATION = 700;
 const LABELS = ['A', 'B', 'C', 'D'];
 
 interface QuestionCardProps {
-  question: Question;
+  question: PublicQuestion;
   questionIndex: number;
-  results: AnswerResult[];
+  /** Answers collected so far. The client doesn't know correctness yet. */
+  answers: { questionId: string; selectedIndex: number | null }[];
   isRevealing: boolean;
   selectedAnswer: number | null;
-  onSelectAnswer: (index: number, timeRemaining: number) => void;
+  onSelectAnswer: (index: number) => void;
   onTimeout: () => void;
   onNextQuestion: () => void;
   timerActive: boolean;
@@ -28,7 +29,7 @@ interface QuestionCardProps {
 export default function QuestionCard({
   question,
   questionIndex,
-  results,
+  answers,
   isRevealing,
   selectedAnswer,
   onSelectAnswer,
@@ -53,68 +54,22 @@ export default function QuestionCard({
     };
   }, [isRevealing, onNextQuestion]);
 
+  // ProgressDots expects AnswerResult[]. While playing we don't know
+  // correctness; show each answered slot as "neutral" (uses the same visual
+  // as an unanswered current dot, but filled) by mapping with isCorrect=false.
+  // The dots that are already past the current index will appear filled (tertiary).
+  // We intentionally keep them neutral-ish by flagging them as answered.
+  const neutralResults: AnswerResult[] = answers.map((a) => ({
+    questionId: a.questionId,
+    selectedIndex: a.selectedIndex,
+    isCorrect: false,
+  }));
+
   function getOptionState(optionIndex: number) {
     if (!isRevealing) return 'default' as const;
-
-    if (optionIndex === question.correctIndex) return 'correct' as const;
-    if (optionIndex === selectedAnswer) return 'incorrect' as const;
+    if (optionIndex === selectedAnswer) return 'selected' as const;
     return 'dimmed' as const;
   }
-
-  const isCorrectAnswer = selectedAnswer === question.correctIndex;
-  const isTimeout = selectedAnswer === null;
-  const correctOptionText = question.options[question.correctIndex];
-
-  type Verdict = {
-    tone: 'correct' | 'incorrect' | 'timeout';
-    Icon: typeof CheckCircle2;
-    headline: string;
-    supporting: string;
-    wrapperClass: string;
-    iconWrapperClass: string;
-    headlineClass: string;
-    supportingClass: string;
-  };
-
-  const verdict: Verdict | null = !isRevealing
-    ? null
-    : isCorrectAnswer
-      ? {
-          tone: 'correct',
-          Icon: CheckCircle2,
-          headline: '¡Correcto!',
-          supporting: 'Sumaste 1 punto',
-          wrapperClass:
-            'glass-card border-2 !border-secondary bg-secondary/10 glow-success',
-          iconWrapperClass: 'bg-secondary/15 text-secondary border-secondary/40',
-          headlineClass: 'text-secondary',
-          supportingClass: 'text-on-surface/80',
-        }
-      : isTimeout
-        ? {
-            tone: 'timeout',
-            Icon: AlarmClock,
-            headline: '¡Se acabó el tiempo!',
-            supporting: `Respuesta correcta: ${correctOptionText}`,
-            wrapperClass:
-              'glass-card border-2 !border-tertiary bg-tertiary/10 glow-error',
-            iconWrapperClass:
-              'bg-tertiary/15 text-tertiary border-tertiary/40',
-            headlineClass: 'text-tertiary',
-            supportingClass: 'text-on-surface/80',
-          }
-        : {
-            tone: 'incorrect',
-            Icon: XCircle,
-            headline: 'Incorrecto',
-            supporting: `Respuesta correcta: ${correctOptionText}`,
-            wrapperClass:
-              'glass-card border-2 !border-tertiary bg-tertiary/10 glow-error',
-            iconWrapperClass:
-              'bg-tertiary/15 text-tertiary border-tertiary/40',
-            headlineClass: 'text-tertiary',
-            supportingClass: 'text-on-surface/80',
-          };
 
   return (
     <motion.div
@@ -139,7 +94,7 @@ export default function QuestionCard({
         >
           <ProgressDots
             currentIndex={questionIndex}
-            results={results}
+            results={neutralResults}
             total={3}
           />
           <span className="category-badge rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary/80 sm:text-[11px]">
@@ -161,7 +116,7 @@ export default function QuestionCard({
           />
         </motion.div>
 
-        {/* Question text — clamp() keeps text legible without overflow on SE */}
+        {/* Question text */}
         <motion.h2
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -175,49 +130,26 @@ export default function QuestionCard({
         {/* Divider */}
         <div className="divider-glow mx-auto mb-4 w-12 sm:mb-5" />
 
-        {/* Verdict banner — appears above answers during reveal */}
+        {/* Neutral "next" banner during reveal — no correct/incorrect hint */}
         <AnimatePresence mode="wait">
-          {verdict && (
+          {isRevealing && (
             <motion.div
-              key={verdict.tone}
-              initial={{ opacity: 0, y: -12, scale: 0.92 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.96 }}
-              transition={{
-                type: 'spring',
-                stiffness: 380,
-                damping: 26,
-                mass: 0.8,
-              }}
+              key="next-banner"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.25 }}
               role="status"
               aria-live="polite"
-              className={`mb-3 flex items-center gap-3 rounded-2xl px-3.5 py-3 sm:mb-4 sm:px-4 sm:py-4 ${verdict.wrapperClass}`}
+              className="mb-3 flex items-center justify-center gap-2 rounded-2xl border border-outline-variant bg-white/60 px-3.5 py-2.5 sm:mb-4 sm:px-4 sm:py-3"
             >
-              <motion.div
-                initial={{ scale: 0.5, rotate: -12, opacity: 0 }}
-                animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                transition={{
-                  delay: 0.08,
-                  type: 'spring',
-                  stiffness: 420,
-                  damping: 18,
-                }}
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border sm:h-12 sm:w-12 ${verdict.iconWrapperClass}`}
-              >
-                <verdict.Icon className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2.5} />
-              </motion.div>
-              <div className="min-w-0 flex-1">
-                <p
-                  className={`font-headline text-lg font-bold leading-tight sm:text-xl ${verdict.headlineClass}`}
-                >
-                  {verdict.headline}
-                </p>
-                <p
-                  className={`mt-0.5 truncate text-[13px] font-medium sm:text-sm ${verdict.supportingClass}`}
-                >
-                  {verdict.supporting}
-                </p>
-              </div>
+              <ChevronRight
+                className="h-4 w-4 text-primary/70"
+                strokeWidth={2.5}
+              />
+              <p className="text-sm font-semibold text-on-surface/80">
+                {questionIndex >= 2 ? 'Calculando resultados…' : 'Siguiente pregunta'}
+              </p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -231,7 +163,7 @@ export default function QuestionCard({
               text={option}
               index={i}
               state={getOptionState(i)}
-              onClick={() => onSelectAnswer(i, timeLeft)}
+              onClick={() => onSelectAnswer(i)}
               disabled={isRevealing}
             />
           ))}
