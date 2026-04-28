@@ -21,6 +21,14 @@ const weekMeta: WeekPool[] = [
     openTime: '10:00',
     closeTime: '23:59',
   },
+  {
+    weekNumber: 2,
+    title: 'Argentina Campeón 1978 y Camino al Mundial 2026',
+    description: 'De Kempes y Holanda a Messi y el debut ante Argelia',
+    availableDate: '2026-04-29',
+    openTime: '10:00',
+    closeTime: '23:59',
+  },
 ];
 
 /** Flat list of week metadata (for admin dashboard, lookups, etc.) */
@@ -79,7 +87,7 @@ export function getCurrentWeekAvailability(): {
   status: WeekAvailabilityStatus;
   weekNumber: number;
 } {
-  const wp = weekMeta[0];
+  const wp = weekMeta[1];
   const { date, minutes } = nowInTriviaTZ();
   const openMin = timeToMinutes(wp.openTime);
   const closeMin = timeToMinutes(wp.closeTime);

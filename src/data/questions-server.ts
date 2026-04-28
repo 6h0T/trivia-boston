@@ -114,6 +114,91 @@ const week1Pool: Question[] = [
   },
 ];
 
+/* ───────────── Pool de preguntas – Semana 2 ───────────── */
+
+const week2Pool: Question[] = [
+  {
+    id: 'w2q1',
+    text: '¿Contra qué selección ganó Argentina su primer Mundial en 1978?',
+    options: ['Brasil', 'Alemania', 'Italia', 'Holanda'],
+    correctIndex: 3,
+    category: 'Fútbol',
+  },
+  {
+    id: 'w2q2',
+    text: '¿Cuál fue la inflación anual en Argentina durante el Mundial 1978?',
+    options: ['45%', '25%', '170%', '60%'],
+    correctIndex: 2,
+    category: 'Economía',
+  },
+  {
+    id: 'w2q3',
+    text: '¿En cuántos años la dictadura militar (1976–1983) multiplicó por seis la deuda externa argentina?',
+    options: ['En 3 años', 'En 7 años', 'En 10 años', 'En 15 años'],
+    correctIndex: 1,
+    category: 'Mercado de Capitales',
+  },
+  {
+    id: 'w2q4',
+    text: '¿Cuántos goles convirtió Mario Alberto Kempes en el Mundial 1978, consagrándose máximo goleador del torneo?',
+    options: ['4 goles', '5 goles', '6 goles', '8 goles'],
+    correctIndex: 2,
+    category: 'Fútbol',
+  },
+  {
+    id: 'w2q5',
+    text: '¿Qué mide el Riesgo País de Argentina, que en abril de 2026 se ubicó en torno a los 500–580 puntos básicos?',
+    options: [
+      'La inflación esperada para los próximos 12 meses',
+      'El sobrecosto de tasa que Argentina paga sobre los bonos del Tesoro de EE.UU. para financiarse',
+      'La cantidad de dólares que tiene el BCRA en reservas',
+      'El nivel de pobreza medido por el INDEC',
+    ],
+    correctIndex: 1,
+    category: 'Mercado de Capitales',
+  },
+  {
+    id: 'w2q6',
+    text: '¿Cuántos goles hizo Lionel Messi en el Mundial Qatar 2022?',
+    options: ['5 goles', '6 goles', '7 goles', '9 goles'],
+    correctIndex: 2,
+    category: 'Fútbol',
+  },
+  {
+    id: 'w2q7',
+    text: '¿Cuál fue la inflación mensual en Argentina según el INDEC en marzo de 2026?',
+    options: ['1,9%', '2,9%', '3,4%', '4,2%'],
+    correctIndex: 2,
+    category: 'Economía',
+  },
+  {
+    id: 'w2q8',
+    text: '¿Contra qué selección debutará Argentina en el Mundial 2026, el martes 16 de junio?',
+    options: ['Australia', 'México', 'Argelia', 'Estados Unidos'],
+    correctIndex: 2,
+    category: 'Fútbol',
+  },
+  {
+    id: 'w2q9',
+    text: '¿Qué organismo regula el mercado de capitales en Argentina y supervisa a las empresas como Boston Asset Manager?',
+    options: [
+      'BCRA — Banco Central',
+      'AFIP',
+      'CNV — Comisión Nacional de Valores',
+      'ANSES',
+    ],
+    correctIndex: 2,
+    category: 'Mercado de Capitales',
+  },
+  {
+    id: 'w2q10',
+    text: '¿Cuál es el objetivo de inflación anual que fijó el Gobierno argentino para 2026 en el Presupuesto?',
+    options: ['5%', '10,1%', '15%', '25%'],
+    correctIndex: 1,
+    category: 'Economía',
+  },
+];
+
 /* ───────────── Semanas ───────────── */
 
 interface ServerWeekPool {
@@ -136,9 +221,18 @@ const weekPools: ServerWeekPool[] = [
     closeTime: '23:59',
     pool: week1Pool,
   },
+  {
+    weekNumber: 2,
+    title: 'Argentina Campeón 1978 y Camino al Mundial 2026',
+    description: 'De Kempes y Holanda a Messi y el debut ante Argelia',
+    availableDate: '2026-04-29',
+    openTime: '10:00',
+    closeTime: '23:59',
+    pool: week2Pool,
+  },
 ];
 
-export { week1Pool, weekPools };
+export { week1Pool, week2Pool, weekPools };
 
 /* ───────────── Randomizer ───────────── */
 
@@ -180,7 +274,7 @@ export function getWeekServer(weekNumber: number): ServerWeeklyTrivia | undefine
 }
 
 export function getCurrentWeekServer(): ServerWeeklyTrivia {
-  const wp = weekPools[0];
+  const wp = weekPools[1];
   const questions = pickRandom(wp.pool, 3) as [Question, Question, Question];
   return {
     weekNumber: wp.weekNumber,
