@@ -183,7 +183,7 @@ const week2Pool: Question[] = [
     text: '¿Qué organismo regula el mercado de capitales en Argentina y supervisa a las empresas como Boston Asset Manager?',
     options: [
       'BCRA — Banco Central',
-      'AFIP',
+      'ARCA',
       'CNV — Comisión Nacional de Valores',
       'ANSES',
     ],
