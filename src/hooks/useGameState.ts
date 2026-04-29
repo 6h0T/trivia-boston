@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GamePhase, AnswerResult, PublicQuestion } from '@/types/game';
 import { startAttempt, submitAttempt } from '@/app/actions/attempts';
-import { weeks } from '@/data/questions';
+import { getCurrentWeekAvailability } from '@/data/questions';
 
 export type StartError =
   | 'session_expired'
@@ -63,10 +63,10 @@ function createInitialState(phase: GamePhase = 'auth'): GameStateV2 {
   };
 }
 
-/** Default week number used when starting a new attempt. Taken from the first
- *  week metadata exported from `@/data/questions` (client-safe). */
+/** Default week number used when starting a new attempt — the currently
+ *  active week per `getCurrentWeekAvailability()` (client-safe). */
 function getDefaultWeekNumber(): number {
-  return weeks[0]?.weekNumber ?? 1;
+  return getCurrentWeekAvailability().weekNumber;
 }
 
 export function useGameState() {
