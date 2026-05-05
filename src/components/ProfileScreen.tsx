@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { LogOut, ChevronRight, ArrowLeft, Lock, Mail, Phone, KeyRound, Check, X } from 'lucide-react';
+import { LogOut, ChevronRight, ArrowLeft, Lock, Mail, Phone, KeyRound, Check, X, Coins, Info } from 'lucide-react';
 import {
   MEDAL_CATALOG,
   CATEGORY_LABELS,
@@ -27,6 +27,11 @@ interface ProfileScreenProps {
   onLogout: () => void;
   onEmailChanged?: (email: string) => void;
   unlockedIds?: string[];
+  medalProgress?: Record<string, number>;
+  totalGames?: number;
+  coinsFromMedals?: number;
+  totalMedalCoins?: number;
+  walletBalance?: number | null;
 }
 
 type EditField = 'email' | 'phone' | 'pin' | null;
@@ -38,6 +43,11 @@ export default function ProfileScreen({
   onLogout,
   onEmailChanged,
   unlockedIds = [],
+  medalProgress = {},
+  totalGames = 0,
+  coinsFromMedals = 0,
+  totalMedalCoins = 0,
+  walletBalance = null,
 }: ProfileScreenProps) {
   const prefersReducedMotion = useReducedMotion();
   const fadeDuration = prefersReducedMotion ? 0 : 0.4;
@@ -49,6 +59,7 @@ export default function ProfileScreen({
   const [selectedCategory, setSelectedCategory] = useState<MedalCategory | null>(null);
   const [account, setAccount] = useState<MyAccount>({ email: userEmail, phone: null });
   const [editField, setEditField] = useState<EditField>(null);
+  const [coinsInfoOpen, setCoinsInfoOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -113,7 +124,76 @@ export default function ProfileScreen({
           </div>
         </motion.div>
 
-        {/* 2. Stats row */}
+        {/* 2. Boston Coins balance card */}
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: stagger(0, 0.07) }}
+          className="mb-3 rounded-xl border border-amber-300/60 bg-gradient-to-br from-amber-50 via-white to-amber-50/40 px-4 py-3 shadow-[0_2px_12px_rgba(245,158,11,0.18)]"
+          aria-label="Balance de Boston Coins"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+              <Coins className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-amber-700/80">
+                  Boston Coins
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setCoinsInfoOpen((v) => !v)}
+                  aria-expanded={coinsInfoOpen}
+                  aria-label="Para que sirven las Boston Coins"
+                  className="flex h-4 w-4 items-center justify-center rounded-full text-amber-700/70 transition-colors hover:bg-amber-100 hover:text-amber-800"
+                >
+                  <Info className="h-3 w-3" strokeWidth={2.5} aria-hidden="true" />
+                </button>
+              </div>
+              <p className="boston-title text-xl sm:text-2xl text-amber-900 tabular-nums">
+                {(walletBalance ?? coinsFromMedals).toLocaleString('es-AR')}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-[9px] sm:text-[10px] uppercase tracking-wider text-outline">
+                Por medallas
+              </p>
+              <p className="font-mono text-[11px] sm:text-xs tabular-nums text-on-surface">
+                <span className="font-bold text-primary">{coinsFromMedals}</span>
+                <span className="text-outline">/{totalMedalCoins}</span>
+              </p>
+            </div>
+          </div>
+
+          <AnimatePresence initial={false}>
+            {coinsInfoOpen && (
+              <motion.div
+                key="coins-info"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-3 rounded-lg border border-amber-200/70 bg-white/70 p-2.5">
+                  <p className="text-[11px] sm:text-xs font-bold text-amber-900 mb-0.5">
+                    ¿Para qué sirven?
+                  </p>
+                  <p className="text-[10px] sm:text-[11px] leading-snug text-on-surface/80">
+                    Sumás Boston Coins desbloqueando medallas. Cuando termine
+                    la trivia, vas a poder trasladar tu cuenta — con tus
+                    logros y monedas — al{' '}
+                    <span className="font-semibold text-primary">Prode Boston</span>
+                    {' '}y usarlas ahí. Pronto más detalles.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* 3. Stats row */}
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -136,7 +216,9 @@ export default function ProfileScreen({
             </p>
           </div>
           <div className="rounded-xl bg-[#f8fafc] border border-[#e2e8f0] p-2.5 sm:p-3 text-center">
-            <p className="boston-title text-xl sm:text-2xl text-outline/40">&mdash;</p>
+            <p className={`boston-title text-xl sm:text-2xl ${totalGames > 0 ? '' : 'text-outline/40'}`}>
+              {totalGames > 0 ? totalGames : <>&mdash;</>}
+            </p>
             <p className="text-[9px] sm:text-[10px] uppercase tracking-wider text-outline">
               Partidas
             </p>
@@ -298,6 +380,7 @@ export default function ProfileScreen({
                       key={medal.id}
                       medal={medal}
                       unlocked={unlockedSet.has(medal.id)}
+                      progress={medalProgress[medal.id]}
                       index={i}
                       reduceMotion={!!prefersReducedMotion}
                     />
@@ -390,16 +473,22 @@ export default function ProfileScreen({
 function MedalRow({
   medal,
   unlocked,
+  progress,
   index,
   reduceMotion,
 }: {
   medal: Medal;
   unlocked: boolean;
+  progress?: number;
   index: number;
   reduceMotion: boolean;
 }) {
   const tierColors = TIER_COLORS[medal.tier];
   const Icon = medal.icon;
+  const progressPct =
+    !unlocked && typeof progress === 'number'
+      ? Math.round(Math.max(0, Math.min(1, progress)) * 100)
+      : null;
 
   return (
     <motion.div
@@ -432,23 +521,52 @@ function MedalRow({
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className={`text-xs sm:text-sm font-bold ${unlocked ? 'text-on-surface' : 'text-on-surface/50'}`}>
-          {medal.name}
-        </p>
+        <div className="flex items-baseline gap-2">
+          <p className={`text-xs sm:text-sm font-bold ${unlocked ? 'text-on-surface' : 'text-on-surface/50'}`}>
+            {medal.name}
+          </p>
+          {progressPct !== null && progressPct > 0 && (
+            <span className="font-mono text-[9px] tabular-nums text-primary/70">
+              {progressPct}%
+            </span>
+          )}
+        </div>
         <p className={`text-[10px] sm:text-[11px] leading-tight ${unlocked ? 'text-outline' : 'text-outline/60'}`}>
           {unlocked ? medal.description : medal.hint}
         </p>
+        {progressPct !== null && progressPct > 0 && (
+          <div className="mt-1 h-1 overflow-hidden rounded-full bg-[#e2e8f0]">
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${progressPct}%`,
+                background: 'linear-gradient(135deg, #1d3969, #2563eb)',
+              }}
+            />
+          </div>
+        )}
       </div>
 
-      <span
-        className={`shrink-0 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider ${
-          unlocked
-            ? `${tierColors.text} ${tierColors.bg}`
-            : 'bg-[#f8fafc] text-outline/40'
-        }`}
-      >
-        {medal.tier}
-      </span>
+      <div className="flex shrink-0 flex-col items-end gap-1">
+        <span
+          className={`rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider ${
+            unlocked
+              ? `${tierColors.text} ${tierColors.bg}`
+              : 'bg-[#f8fafc] text-outline/40'
+          }`}
+        >
+          {medal.tier}
+        </span>
+        <span
+          className={`flex items-center gap-0.5 font-mono text-[10px] tabular-nums ${
+            unlocked ? 'text-amber-600' : 'text-outline/50'
+          }`}
+          aria-label={`Recompensa: ${medal.coins} Boston Coins`}
+        >
+          <Coins className="h-2.5 w-2.5" strokeWidth={2.5} aria-hidden="true" />
+          {medal.coins}
+        </span>
+      </div>
     </motion.div>
   );
 }

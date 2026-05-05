@@ -6,6 +6,7 @@ import { useGameState } from '@/hooks/useGameState';
 import { useAuth } from '@/hooks/useAuth';
 import { getCurrentWeekAvailability, weeks } from '@/data/questions';
 import { getDailyAttempts } from '@/app/actions/sessions';
+import { getUserMedals } from '@/app/actions/medals';
 import StadiumBackground from './StadiumBackground';
 import AuthScreen from './AuthScreen';
 import StartScreen from './StartScreen';
@@ -58,6 +59,21 @@ export default function TriviaGame() {
     remaining: number;
     limit: number;
   } | null>(null);
+  const [medalState, setMedalState] = useState<{
+    unlockedIds: string[];
+    progress: Record<string, number>;
+    totalGames: number;
+    coinsFromMedals: number;
+    totalMedalCoins: number;
+    walletBalance: number | null;
+  }>({
+    unlockedIds: [],
+    progress: {},
+    totalGames: 0,
+    coinsFromMedals: 0,
+    totalMedalCoins: 0,
+    walletBalance: null,
+  });
 
   // Re-check availability every 30s so lock/unlock happens without reload
   useEffect(() => {
@@ -83,6 +99,28 @@ export default function TriviaGame() {
       refreshAttempts();
     }
   }, [user, state.phase, refreshAttempts]);
+
+  // Refrescar medallas al entrar al perfil o despues de jugar/ranking
+  useEffect(() => {
+    if (!user) return;
+    if (
+      state.phase === 'profile' ||
+      state.phase === 'finished' ||
+      state.phase === 'start'
+    ) {
+      let active = true;
+      getUserMedals(user.id)
+        .then((res) => {
+          if (active) setMedalState(res);
+        })
+        .catch(() => {
+          /* silent */
+        });
+      return () => {
+        active = false;
+      };
+    }
+  }, [user, state.phase]);
 
   // Sync stored user → game phase on hydrate
   useEffect(() => {
@@ -265,6 +303,12 @@ export default function TriviaGame() {
             onEmailChanged={(email) =>
               setAuthenticated({ ...user, email })
             }
+            unlockedIds={medalState.unlockedIds}
+            medalProgress={medalState.progress}
+            totalGames={medalState.totalGames}
+            coinsFromMedals={medalState.coinsFromMedals}
+            totalMedalCoins={medalState.totalMedalCoins}
+            walletBalance={medalState.walletBalance}
           />
         )}
 
