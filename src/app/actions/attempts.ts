@@ -2,6 +2,11 @@
 
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { requireActiveSession } from '@/lib/auth/auth-session';
+import {
+  setAttemptToken,
+  verifyAttemptTiming,
+  clearAttemptToken,
+} from '@/lib/auth/attempt-timing';
 import { getWeekServer } from '@/data/questions-server';
 import { isWeekAvailable } from '@/data/questions';
 import type { PublicQuestion } from '@/types/game';
@@ -73,14 +78,18 @@ export async function startAttempt(weekNumber: number): Promise<StartAttemptResu
     return { ok: false, error: 'session_expired' };
   }
 
+  const attemptId = payload.attempt_id as string;
+  const startedAtMs = Number(payload.started_at_ms);
+  await setAttemptToken(attemptId, startedAtMs);
+
   return {
     ok: true,
-    attemptId: payload.attempt_id as string,
+    attemptId,
     weekNumber: week.weekNumber,
     weekTitle: week.title,
     weekDescription: week.description,
     questions: publicQuestions,
-    startedAtMs: Number(payload.started_at_ms),
+    startedAtMs,
   };
 }
 
@@ -90,6 +99,13 @@ export async function submitAttempt(
 ): Promise<SubmitAttemptResult> {
   const session = await requireActiveSession();
   if (!session.ok) return { ok: false, error: 'session_expired' };
+
+  // Anti-tampering: rechazar submits que llegan demasiado rápido (script bypass).
+  // El token firmado HMAC se setea en startAttempt y captura started_at server-side.
+  const timing = await verifyAttemptTiming(attemptId);
+  if (!timing.ok) {
+    return { ok: false, error: 'invalid_attempt' };
+  }
 
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase.rpc('submit_trivia_attempt', {
@@ -113,6 +129,8 @@ export async function submitAttempt(
     }
     return { ok: false, error: 'save_failed' };
   }
+
+  await clearAttemptToken();
 
   return {
     ok: true,
