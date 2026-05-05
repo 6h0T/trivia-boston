@@ -29,6 +29,15 @@ const weekMeta: WeekPool[] = [
     openTime: '10:00',
     closeTime: '23:59',
   },
+  {
+    weekNumber: 3,
+    title: 'SEMANA 3: Mundial 1986 México, Argentina campeón.',
+    description:
+      'El Mundial de Maradona. La Mano de Dios, el Gol del Siglo, la revancha contra Inglaterra. El título más épico de la historia argentina.',
+    availableDate: '2026-05-06',
+    openTime: '10:00',
+    closeTime: '23:59',
+  },
 ];
 
 /** Flat list of week metadata (for admin dashboard, lookups, etc.) */
@@ -78,6 +87,19 @@ export function isWeekAvailable(weekNumber: number): boolean {
   return minutes >= timeToMinutes(wp.openTime) && minutes <= timeToMinutes(wp.closeTime);
 }
 
+/** Selecciona la semana "activa" segun la fecha de hoy en la TZ trivia.
+ * Prioridad: 1) la que abre hoy, 2) la proxima upcoming, 3) la ultima ya pasada. */
+function pickActiveWeek(today: string): WeekPool {
+  const sorted = [...weekMeta].sort((a, b) =>
+    a.availableDate.localeCompare(b.availableDate),
+  );
+  const sameDay = sorted.find((w) => w.availableDate === today);
+  if (sameDay) return sameDay;
+  const upcoming = sorted.find((w) => w.availableDate > today);
+  if (upcoming) return upcoming;
+  return sorted[sorted.length - 1];
+}
+
 /** Availability info for the current week */
 export function getCurrentWeekAvailability(): {
   available: boolean;
@@ -87,8 +109,8 @@ export function getCurrentWeekAvailability(): {
   status: WeekAvailabilityStatus;
   weekNumber: number;
 } {
-  const wp = weekMeta[1];
   const { date, minutes } = nowInTriviaTZ();
+  const wp = pickActiveWeek(date);
   const openMin = timeToMinutes(wp.openTime);
   const closeMin = timeToMinutes(wp.closeTime);
 

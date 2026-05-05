@@ -199,6 +199,116 @@ const week2Pool: Question[] = [
   },
 ];
 
+/* ───────────── Pool de preguntas – Semana 3 ───────────── */
+
+const week3Pool: Question[] = [
+  {
+    id: 'w3q1',
+    text: '¿En qué país se jugó el Mundial 1986?',
+    options: ['España', 'Estados Unidos', 'México', 'Italia'],
+    correctIndex: 2,
+    category: 'Fútbol',
+  },
+  {
+    id: 'w3q2',
+    text: '¿Cuál era la moneda oficial argentina en el 86?',
+    options: ['Peso', 'Austral', 'Peso Convertible', 'Dólar'],
+    correctIndex: 1,
+    category: 'Economía',
+  },
+  {
+    id: 'w3q3',
+    text: '¿Quién fue el director técnico de la Selección Argentina en el Mundial 86?',
+    options: [
+      'César Luis Menotti',
+      'Carlos Salvador Bilardo',
+      'Daniel Passarella',
+      'Alfio Basile',
+    ],
+    correctIndex: 1,
+    category: 'Fútbol',
+  },
+  {
+    id: 'w3q4',
+    text: '¿Qué presidente argentino lanzó el Plan Austral en 1985, un año antes del Mundial?',
+    options: [
+      'Carlos Menem',
+      'Raúl Alfonsín',
+      'Fernando de la Rúa',
+      'Néstor Kirchner',
+    ],
+    correctIndex: 1,
+    category: 'Economía',
+  },
+  {
+    id: 'w3q5',
+    text: '¿Qué son las reservas internacionales del BCRA?',
+    options: [
+      'El dinero en cajas de ahorro de los argentinos',
+      'Los dólares y oro que tiene el Banco Central',
+      'La deuda total con el FMI',
+      'La recaudación impositiva del Estado',
+    ],
+    correctIndex: 1,
+    category: 'Mercado de Capitales',
+  },
+  {
+    id: 'w3q6',
+    text: '¿En qué año ganó Argentina su anterior Copa del Mundo antes de Qatar 2022?',
+    options: ['1978', '1986', '1990', '1994'],
+    correctIndex: 1,
+    category: 'Fútbol',
+  },
+  {
+    id: 'w3q7',
+    text: '¿Bajo qué esquema cambiario opera actualmente Argentina?',
+    options: [
+      'Convertibilidad 1 a 1 con el dólar',
+      'Tipo de cambio fijo',
+      'Bandas cambiarias móviles',
+      'Cepo cambiario estricto',
+    ],
+    correctIndex: 2,
+    category: 'Economía',
+  },
+  {
+    id: 'w3q8',
+    text: '¿Qué día arranca el Mundial 2026?',
+    options: [
+      '1 de junio de 2026',
+      '11 de junio de 2026',
+      '16 de junio de 2026',
+      '30 de junio de 2026',
+    ],
+    correctIndex: 1,
+    category: 'Fútbol',
+  },
+  {
+    id: 'w3q9',
+    text: '¿Qué significa la sigla ALyC en el mercado de capitales argentino?',
+    options: [
+      'Asociación Local de Compradores',
+      'Agente de Liquidación y Compensación',
+      'Acuerdo de Letras y Cobros',
+      'Ahorro Local y Compensado',
+    ],
+    correctIndex: 1,
+    category: 'Mercado de Capitales',
+  },
+  {
+    id: 'w3q10',
+    text: '¿Qué significa que un país tenga "superávit fiscal", como mostró Argentina en el primer trimestre de 2026?',
+    options: [
+      'Que el Estado gasta más de lo que recauda',
+      'Que el Estado recauda más de lo que gasta',
+      'Que la inflación bajó',
+      'Que subieron los salarios',
+    ],
+    correctIndex: 1,
+    category: 'Economía',
+  },
+];
+
 /* ───────────── Semanas ───────────── */
 
 interface ServerWeekPool {
@@ -230,9 +340,19 @@ const weekPools: ServerWeekPool[] = [
     closeTime: '23:59',
     pool: week2Pool,
   },
+  {
+    weekNumber: 3,
+    title: 'SEMANA 3: Mundial 1986 México, Argentina campeón.',
+    description:
+      'El Mundial de Maradona. La Mano de Dios, el Gol del Siglo, la revancha contra Inglaterra. El título más épico de la historia argentina.',
+    availableDate: '2026-05-06',
+    openTime: '10:00',
+    closeTime: '23:59',
+    pool: week3Pool,
+  },
 ];
 
-export { week1Pool, week2Pool, weekPools };
+export { week1Pool, week2Pool, week3Pool, weekPools };
 
 /* ───────────── Randomizer ───────────── */
 
@@ -274,7 +394,7 @@ export function getWeekServer(weekNumber: number): ServerWeeklyTrivia | undefine
 }
 
 export function getCurrentWeekServer(): ServerWeeklyTrivia {
-  const wp = weekPools[1];
+  const wp = pickActiveWeekPool();
   const questions = pickRandom(wp.pool, 3) as [Question, Question, Question];
   return {
     weekNumber: wp.weekNumber,
@@ -282,4 +402,28 @@ export function getCurrentWeekServer(): ServerWeeklyTrivia {
     description: wp.description,
     questions,
   };
+}
+
+/** Igual que pickActiveWeek del cliente: hoy → upcoming → ultimo pasado. */
+function pickActiveWeekPool(): ServerWeekPool {
+  const today = nowInTriviaTZServer();
+  const sorted = [...weekPools].sort((a, b) =>
+    a.availableDate.localeCompare(b.availableDate),
+  );
+  const sameDay = sorted.find((w) => w.availableDate === today);
+  if (sameDay) return sameDay;
+  const upcoming = sorted.find((w) => w.availableDate > today);
+  if (upcoming) return upcoming;
+  return sorted[sorted.length - 1];
+}
+
+function nowInTriviaTZServer(): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '00';
+  return `${get('year')}-${get('month')}-${get('day')}`;
 }
