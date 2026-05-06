@@ -35,7 +35,7 @@ const weekMeta: WeekPool[] = [
     description:
       'El Mundial de Maradona. La Mano de Dios, el Gol del Siglo, la revancha contra Inglaterra. El título más épico de la historia argentina.',
     availableDate: '2026-05-06',
-    openTime: '10:00',
+    openTime: '09:30',
     closeTime: '23:59',
   },
 ];
