@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { motion } from 'motion/react';
 import { Play, Zap, Clock, Lock, CalendarDays } from 'lucide-react';
+import PremiosPopup from './PremiosPopup';
 
 interface StartScreenProps {
   userName: string;
@@ -59,6 +60,7 @@ export default function StartScreen({
       transition={{ duration: 0.4 }}
       className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-center px-5 pb-nav pt-6 sm:px-6 sm:pt-10"
     >
+      <PremiosPopup />
       <motion.div
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
