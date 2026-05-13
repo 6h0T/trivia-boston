@@ -309,6 +309,116 @@ const week3Pool: Question[] = [
   },
 ];
 
+/* ───────────── Pool de preguntas – Semana 4 ───────────── */
+
+const week4Pool: Question[] = [
+  {
+    id: 'w4q1',
+    text: '¿En qué país se jugó el Mundial 1994?',
+    options: ['Italia', 'Estados Unidos', 'México', 'Francia'],
+    correctIndex: 1,
+    category: 'Fútbol',
+  },
+  {
+    id: 'w4q2',
+    text: '¿Por qué Diego Maradona quedó afuera de este Mundial?',
+    options: [
+      'Por una lesión',
+      'Por una pelea con el técnico',
+      'Por dar positivo en un control antidoping (efedrina)',
+      'Por llegar tarde',
+    ],
+    correctIndex: 2,
+    category: 'Fútbol',
+  },
+  {
+    id: 'w4q3',
+    text: '¿Quién era el ministro de Economía en 1994?',
+    options: [
+      'Roque Fernández',
+      'Domingo Cavallo',
+      'Roberto Lavagna',
+      'Antonio Erman González',
+    ],
+    correctIndex: 1,
+    category: 'Economía',
+  },
+  {
+    id: 'w4q4',
+    text: '¿Qué es una cuenta comitente?',
+    options: [
+      'Una cuenta corriente con cheques',
+      'Una cuenta especial para operar en el mercado de capitales',
+      'Una caja de ahorro en dólares',
+      'Una cuenta para pagar servicios',
+    ],
+    correctIndex: 1,
+    category: 'Mercado de Capitales',
+  },
+  {
+    id: 'w4q5',
+    text: '¿A qué hora juega Argentina su primer partido contra Argelia el 16 de junio?',
+    options: ['16:00 hs', '19:00 hs', '22:00 hs', '23:00 hs'],
+    correctIndex: 2,
+    category: 'Fútbol',
+  },
+  {
+    id: 'w4q6',
+    text: '¿Qué significa el término que una inversión tenga "rendimiento real positivo"?',
+    options: [
+      'Que tuvo ganancia, sin descontar la inflación',
+      'Que la ganancia es mayor a la inflación del período',
+      'Que el capital invertido se mantuvo igual',
+      'Que la inversión está garantizada por el Estado',
+    ],
+    correctIndex: 1,
+    category: 'Economía',
+  },
+  {
+    id: 'w4q7',
+    text: '¿Qué es un CEDEAR?',
+    options: [
+      'Una acción de una empresa argentina que cotiza en pesos',
+      'Un certificado que representa acciones de empresas extranjeras y cotiza en pesos',
+      'Un bono emitido por el Banco Central que cotiza en dólares',
+      'Un fondo común de inversión en dólares',
+    ],
+    correctIndex: 1,
+    category: 'Mercado de Capitales',
+  },
+  {
+    id: 'w4q8',
+    text: 'El Mundial 2026 tendrá un récord histórico de selecciones participantes. ¿Cuántas serán?',
+    options: ['32', '36', '48', '64'],
+    correctIndex: 2,
+    category: 'Fútbol',
+  },
+  {
+    id: 'w4q9',
+    text: '¿Qué significa "déficit fiscal"?',
+    options: [
+      'Que el Estado tiene superávit',
+      'Que el Estado gasta más de lo que recauda',
+      'Que sube el dólar',
+      'Que el dólar supera la inflación',
+    ],
+    correctIndex: 1,
+    category: 'Economía',
+  },
+  {
+    id: 'w4q10',
+    text: '¿Qué es un Fondo Común de Inversión (FCI)?',
+    options: [
+      'Una cuenta bancaria en el exterior',
+      'Un instrumento que reúne dinero de varios inversores para invertir en distintos activos',
+      'Un préstamo del Estado para invertir',
+      'Un seguro de inversión garantizado',
+    ],
+    correctIndex: 1,
+    category: 'Mercado de Capitales',
+  },
+];
+
 /* ───────────── Semanas ───────────── */
 
 interface ServerWeekPool {
@@ -350,9 +460,19 @@ const weekPools: ServerWeekPool[] = [
     closeTime: '23:59',
     pool: week3Pool,
   },
+  {
+    weekNumber: 4,
+    title: 'SEMANA 4: Mundial 1994 Estados Unidos.',
+    description:
+      'El Mundial del adiós. El último torneo de Maradona con la Selección y la temprana eliminación en octavos. Brasil se consagró tetracampeón en la primera final por penales de la historia de los Mundiales.',
+    availableDate: '2026-05-13',
+    openTime: '10:00',
+    closeTime: '23:59',
+    pool: week4Pool,
+  },
 ];
 
-export { week1Pool, week2Pool, week3Pool, weekPools };
+export { week1Pool, week2Pool, week3Pool, week4Pool, weekPools };
 
 /* ───────────── Randomizer ───────────── */
 

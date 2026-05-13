@@ -38,6 +38,15 @@ const weekMeta: WeekPool[] = [
     openTime: '09:30',
     closeTime: '23:59',
   },
+  {
+    weekNumber: 4,
+    title: 'SEMANA 4: Mundial 1994 Estados Unidos.',
+    description:
+      'El Mundial del adiós. El último torneo de Maradona con la Selección y la temprana eliminación en octavos. Brasil se consagró tetracampeón en la primera final por penales de la historia de los Mundiales.',
+    availableDate: '2026-05-13',
+    openTime: '10:00',
+    closeTime: '23:59',
+  },
 ];
 
 /** Flat list of week metadata (for admin dashboard, lookups, etc.) */
