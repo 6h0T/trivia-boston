@@ -25,7 +25,7 @@ function startErrorMessage(
     case 'week_not_available':
       return 'La trivia no está disponible en este momento.';
     case 'daily_limit_reached':
-      return 'Ya usaste tus 3 intentos de hoy. Volvé mañana.';
+      return 'Ya usaste tus 3 intentos de hoy. Volvé la semana que viene.';
     case 'session_expired':
       return 'Se cerró tu sesión. Volvé a iniciar sesión.';
     default:

@@ -163,7 +163,7 @@ export default function StartScreen({
               </p>
               {dailyLimitReached ? (
                 <p className="text-xs text-[#64748b]">
-                  Volvé mañana para jugar de nuevo.
+                  Volvé la semana que viene para jugar de nuevo.
                 </p>
               ) : (
                 availableDate && (

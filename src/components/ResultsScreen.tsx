@@ -51,7 +51,7 @@ function formatTime(ms: number): string {
 function errorMessage(err: SubmitError): string {
   switch (err) {
     case 'daily_limit_reached':
-      return 'Ya usaste tus 3 intentos de hoy. Volvé mañana.';
+      return 'Ya usaste tus 3 intentos de hoy. Volvé la semana que viene.';
     case 'already_submitted':
       return 'Esta partida ya fue registrada.';
     case 'invalid_attempt':
@@ -264,7 +264,7 @@ export default function ResultsScreen({
             }`}
           >
             {limitReached
-              ? 'Ya usaste tus 3 intentos de hoy. Volvé mañana.'
+              ? 'Ya usaste tus 3 intentos de hoy. Volvé la semana que viene.'
               : `Te ${attemptsRemaining === 1 ? 'queda' : 'quedan'} ${attemptsRemaining} de 3 ${
                   attemptsRemaining === 1 ? 'intento' : 'intentos'
                 } hoy`}
